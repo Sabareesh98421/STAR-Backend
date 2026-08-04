@@ -19,10 +19,7 @@
     "forceConsistentCasingInFileNames": true,
     "noPropertyAccessFromIndexSignature": false,
 
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["src/*"]
-    }
+  "paths": { "@/*": ["./src/*"] }
   },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules"]
