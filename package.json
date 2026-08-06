@@ -22,5 +22,9 @@
     "elysia": "^1.4.29",
     "ioredis": "^6.0.0",
     "uuid": "^14.0.1"
+  },
+  "exports": {
+    ".": "./src/server/server.ts",
+    "./webSocket": "./src/socket/index.ts"
   }
 }
