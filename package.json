@@ -21,10 +21,13 @@
     "dotenv": "^17.4.2",
     "elysia": "^1.4.29",
     "ioredis": "^6.0.0",
-    "uuid": "^14.0.1"
+    "uuid": "^14.0.1",
+    "zod": "^4.4.3"
   },
   "exports": {
     ".": "./src/server/server.ts",
-    "./webSocket": "./src/socket/index.ts"
+    "./webSocket": "./src/socket/index.ts",
+    "./email":"./src/modules/auth/providers/email",
+    "./otp":"./src/modules/auth/providers/OTP"
   }
 }
