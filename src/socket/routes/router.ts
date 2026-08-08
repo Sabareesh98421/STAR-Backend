@@ -1,6 +1,6 @@
 //socket/router.ts
 import {Elysia} from 'elysia';
-import { wsHandler } from '@/socket';
+import { wsHandler } from '@/socket/handlers';
 // const socketRouterConfig={
 //     prefix:'/socket'
 // };
