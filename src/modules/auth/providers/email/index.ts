@@ -1,0 +1,1 @@
+export {default as emailRouter} from './email.router'

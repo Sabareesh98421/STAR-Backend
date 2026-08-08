@@ -1,5 +1,5 @@
 // server/router.ts
-import socketRouter from '@/socket/router';
+import { socketRouter } from '@/socket/routes';
 import { Elysia } from 'elysia';
 const routerConfig={
     prefix:'/api',
