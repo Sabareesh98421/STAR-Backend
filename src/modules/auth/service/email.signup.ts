@@ -1,7 +1,10 @@
 
 import response from '@/shared/http/response';
-import { success,failure } from '@/shared/http/responseHelper';
+import { success } from '@/shared/http/responseHelper';
 import type { EmailSignupRequest } from '../providers/email/email.schema';
+import { db } from '@/infrastructure/sqlLite/sqlLite.client';
+import { AppError } from '@/shared/errors';
+import appErrorCodes from '@/shared/errors/app.error.codes';
 export default function signupService(body:EmailSignupRequest) {
 //INFO: Move this logic into server.ts : by Author: Padmanabhan.S
     // if(!body) {
@@ -9,7 +12,20 @@ export default function signupService(body:EmailSignupRequest) {
     //         failure(new ValidationError('Request Body is Required'))
     //     );
     // }
-    const _user:EmailSignupRequest = body;
-    // oho...Ihaven't setup the Redis 😅  
-    return response(success<null>(null,'User signed up successfully',201));
+    const user:EmailSignupRequest = body;
+
+    // oho...Ihaven't setup the Sqlite😅
+    
+    try{
+
+        const sqlLite =  db.connectDb();
+        if(!sqlLite) {
+            throw new AppError("Db connection failed",appErrorCodes.dbStartError.toString(),500);
+        }
+        sqlLite?.set(user)
+        return response(success<null>(null,'User signed up successfully',201));
+    }
+    catch(err:unknown){
+
+    }
 }
