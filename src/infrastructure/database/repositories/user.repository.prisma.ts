@@ -2,7 +2,7 @@
 import { Prisma, type User } from "@/generated/prisma/client";
 import { getDb } from "../client";
 import { ConflictError } from "@/shared/errors";
-import { tryCatch, NEXT, type Resolver } from "@/shared/utils/try-catch";
+import { TryCatch, NEXT, type Resolver } from "@/shared/utils/try-catch";
 import type { CreateUserInput, IUserRepository, UserRecord } from "./user.repository";
 
 const UNIQUE_CONSTRAINT_VIOLATION = "P2002";
@@ -28,8 +28,7 @@ function toUserRecord(user: User): UserRecord {
 export class PrismaUserRepository implements IUserRepository {
     async create(input: CreateUserInput): Promise<UserRecord> {
         const db = getDb();
-        const withCreateErrorHandling = tryCatch(resolveDuplicateEmail(input.email));
-        const user = await withCreateErrorHandling(() =>
+        const user = await TryCatch.of(() =>
             db.user.create({
                 data: {
                     email: input.email,
@@ -38,7 +37,7 @@ export class PrismaUserRepository implements IUserRepository {
                     passwordHash: input.passwordHash,
                 },
             })
-        );
+        ).onError(resolveDuplicateEmail(input.email));
         return toUserRecord(user);
     }
 
