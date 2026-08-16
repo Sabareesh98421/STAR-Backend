@@ -4,7 +4,8 @@ import { PrismaClient } from "@/generated/prisma/client";
 import { logger } from "@/infrastructure/logger";
 import { AppError } from "@/shared/errors";
 import appErrorCodes from "@/shared/errors/app.error.codes";
-import { tryCatch, type Resolver } from "@/shared/utils/try-catch";
+import { TryCatch, type Resolver } from "@/shared/utils/try-catch";
+import { databaseConfig } from "@/config";
 
 let prisma: PrismaClient | null = null;
 
@@ -17,17 +18,15 @@ const resolveConnectionError: Resolver<PrismaClient> = (error) => {
     );
 };
 
-const withConnectionErrorHandling = tryCatch(resolveConnectionError);
-
 export async function connectDatabase(): Promise<PrismaClient> {
     if (prisma) return prisma;
-    return withConnectionErrorHandling(async () => {
-        const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
+    return TryCatch.of(async () => {
+        const adapter = new PrismaPg({ connectionString: databaseConfig.url });
         const client = new PrismaClient({ adapter });
         await client.$connect();
         prisma = client;
         return prisma;
-    });
+    }).onError(resolveConnectionError);
 }
 
 export function getDb(): PrismaClient {
