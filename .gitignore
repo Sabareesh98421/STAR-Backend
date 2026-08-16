@@ -40,3 +40,9 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 
 # Prisma generated client
 /src/generated/
+
+# Playwright
+/test-results/
+/playwright-report/
+
+/notes
