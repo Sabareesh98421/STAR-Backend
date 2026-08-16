@@ -1,13 +1,14 @@
 import pino from "pino";
+import { loggerConfig } from "@/config";
 
 //server.log.ts
-function loggerConfig(){
+function createLogger(){
     const logConfig={
-        level:process.env.LOG_LEVEL,
+        level:loggerConfig.level,
         base:{service:'star'},
         timestamp:pino.stdTimeFunctions.isoTime,
-        transport:process.env.NODE_ENV !== 'production' ? {target:'pino-pretty',options:{colourize:true}}:undefined
+        transport:!loggerConfig.isProduction ? {target:'pino-pretty',options:{colourize:true}}:undefined
     }
     return pino(logConfig)
 }
-export const logger = loggerConfig()
+export const logger = createLogger()
