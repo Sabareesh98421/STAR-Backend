@@ -3,3 +3,5 @@ export { NotFoundError } from './not-found.error.ts';
 export { ValidationError } from './validation.error.ts';
 export { UnauthorizedError } from './unauthorized.error.ts';
 export { ConflictError } from './conflict.error.ts';
+export { TooManyRequestsError } from './too-many-requests.error.ts';
+export { ElysiaErrorCode } from './elysia.error.codes.ts';
