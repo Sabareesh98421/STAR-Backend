@@ -2,8 +2,10 @@
 import { logger } from '@/infrastructure/logger';
 import { authRoutes } from '@/modules/auth/routes';
 import { AppError, ValidationError } from '@/shared/errors';
+import response from '@/shared/http/response';
+import { failure } from '@/shared/http/responseHelper';
 import { socketRouter } from '@/socket/routes';
-import { Elysia, status } from 'elysia';
+import { Elysia } from 'elysia';
 const routerConfig={
     prefix:'/api',
 }
@@ -34,8 +36,8 @@ const masterRouter = new Elysia(routerConfig).derive(()=>({starttime:Date.now()}
 })
 .onError(({request,code,error})=>{
     const path = new URL(request.url).pathname
-    const appError = code === "VALIDATION" ? new ValidationError(error.message) 
-    : error instanceof AppError ? error 
+    const appError = code === "VALIDATION" ? new ValidationError(error.message)
+    : error instanceof AppError ? error
     : new AppError("Internal server Error","INTERNAL",500)
     logger.error(
         {
@@ -46,6 +48,7 @@ const masterRouter = new Elysia(routerConfig).derive(()=>({starttime:Date.now()}
 
         }
     )
+    return response(failure(appError));
 })
 .use(socketRouter)
 .use(authRoutes)
