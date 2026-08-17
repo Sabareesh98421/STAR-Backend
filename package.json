@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "bun run --watch src/server/server.ts",
     "start": "bun run src/server/server.ts",
-    "test": "NODE_ENV=test playwright test",
+    "test": "NODE_ENV=test bun --bun node_modules/.bin/playwright test",
     "lint": "bun run --check src/",
     "postinstall": "prisma generate",
     "db:generate": "prisma generate",
