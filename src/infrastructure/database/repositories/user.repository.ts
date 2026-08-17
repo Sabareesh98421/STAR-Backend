@@ -2,7 +2,7 @@
 export interface CreateUserInput {
     email: string;
     firstName: string;
-    secondName?: string;
+    secondName: string | null;
     passwordHash: string;
 }
 

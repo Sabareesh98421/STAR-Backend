@@ -27,6 +27,7 @@ export async function connectRedis(): Promise<Redis> {
     return TryCatch.of(async () => {
         const client = new Redis({
             ...redisConfig,
+            password: redisConfig.password ?? undefined,
             lazyConnect: true,
             maxRetriesPerRequest: 3,
         });

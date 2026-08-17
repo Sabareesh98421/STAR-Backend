@@ -13,7 +13,7 @@ export function getMailer(): Transporter {
             port: mailerConfig.port,
             secure: mailerConfig.secure,
             auth: mailerConfig.user
-                ? { user: mailerConfig.user, pass: mailerConfig.pass }
+                ? { user: mailerConfig.user, pass: mailerConfig.pass ?? undefined }
                 : undefined,
         });
     return transporter;
