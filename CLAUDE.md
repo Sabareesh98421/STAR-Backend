@@ -24,6 +24,34 @@ user's own account only.
 
 ## Error handling conventions
 
+- Use `TryCatch.of(fn).onError(resolver)` instead of a native `try { }
+  catch { }` for anything that can fail and needs to react to it (I/O,
+  Redis/DB calls, a step that must roll back on failure). It keeps the
+  fatal-vs-recoverable distinction (`NEXT` vs `throw`) and the `toAppError`
+  logging path in one place instead of every call site reimplementing its own
+  version. Native `try/catch` is only for the cases `TryCatch`'s single-attempt
+  recover-or-rethrow model doesn't fit: a multi-attempt retry loop
+  (`otp.mailer.ts`'s `sendWithRetry`, `server.ts`'s port-binding fallback — the
+  loop's next iteration *is* the recovery, not a value a resolver returns), a
+  synchronous function (`TryCatch` is async-only), or `try-catch.ts` itself,
+  which can't depend on the abstraction it implements. A `try { } finally { }`
+  with no `catch` (test cleanup, e.g. restoring a stub) is a different
+  construct — always-runs cleanup, not error recovery — and isn't covered by
+  this rule.
+- Keep a service function's business logic and its error handling in two
+  separate functions, not one. The logic function is a plain, unexported
+  `async function` — no `TryCatch` inside it except around a step that needs
+  its own rollback-and-rethrow (see `otp.store.ts`'s `saveOtp`). The only
+  exported symbol is a one-line `xHandler(body)` wrapper: `TryCatch.of(() =>
+  x(body)).onError(toResponse)` (see `otp.service.ts`'s `requestOtpHandler`/
+  `verifyOtpHandler` over the private `requestOtp`/`verifyOtp`). This keeps
+  the logic callable and testable on its own and guarantees nothing outside
+  the file can reach it without going through the error-handling wrapper —
+  don't export the logic function itself, and don't inline the two together.
+  The router calls that handler directly (`({ body }) => xHandler(body)`) —
+  no separate `*.handler.ts` file whose only job is unwrapping Elysia's
+  `Context` into `body`. That's a third layer that earns nothing and forces
+  two different functions to share the name `xHandler`.
 - A resolver passed to `TryCatch.onError` that should be fatal (e.g. a failed
   startup dependency) must `throw`, not just log. Returning anything other than
   `NEXT` tells `TryCatch` the error was handled, so execution continues as if
@@ -58,6 +86,45 @@ user's own account only.
   1 attempt. If it's ever misconfigured to `0`, a `for (i = 1; i <= n; i++)`
   loop over it silently skips the work entirely and returns success — clamp
   with `Math.max(1, n)` rather than trusting the config value directly.
+
+## Code style conventions
+
+- No variable that exists only to rename something. `const VERIFY_EMAIL =
+  OtpPurpose.VerifyEmail` then using `VERIFY_EMAIL` adds a name without adding
+  meaning — use the original. Same for a `const x = getX()` that's read once:
+  inline the call. A local variable earns its place when it's used more than
+  once, or when the name explains a value the expression doesn't.
+- No hardcoded string that appears in more than one place. If a literal is
+  needed twice — a Redis key format, an error code, a purpose/status value —
+  it goes in one exported constant, enum, or builder function, and every
+  caller (including specs) imports it. Scope it to the narrowest place that
+  serves all its callers: module-local first (`otpKey`/`cooldownKey` in
+  `otp.store.ts`, `pendingSignupKey` in `email.signup.store.ts`), shared
+  (`src/shared/errors/`, `src/config/`) only when more than one module needs
+  it. Export the builder rather than letting a spec re-type the format —
+  a test that rebuilds `otp:${purpose}:${email}` by hand keeps passing when
+  the real key format changes, which is exactly when it should fail.
+
+## Type conventions
+
+- No `undefined`, anywhere, in our own code. Use `null` for every absent,
+  missing, or optional value. An optional interface field (`secondName?:
+  string`) types as `T | undefined` and lets a caller silently omit it — write
+  `secondName: T | null` instead, so every call site has to state the absence
+  explicitly. This applies to our own types, function params/returns, class
+  fields (e.g. `AppError.details` defaults to `null`, not left unset), and
+  local variables — not just object shapes.
+- A platform value that arrives as `undefined` (`process.env.X`, `Array.find`,
+  a third-party SDK field) gets converted to `null` the moment our code
+  receives it — it never propagates past that first line into our own
+  functions, types, or variables.
+- The only exception is a call site that hands data *into* a third-party
+  constructor/function whose own TypeScript type requires `undefined`
+  specifically and rejects `null` (e.g. `ioredis`'s `RedisOptions.password`,
+  `nodemailer`'s transport `auth`, `pino`'s `transport` option) — there,
+  convert `null` back to `undefined` (`value ?? undefined`) inline, right at
+  that call, never earlier. Our own config/domain values stay `null`-typed up
+  to that exact line.
 
 ## Test case generation
 
@@ -96,4 +163,14 @@ pushing to it.
 
 ### Read the Notes
 
-  in the src folder there is a folder called notes, where I draft and note the issues that I found based on the module wise you Read the note folder's files and plan according to those noted one's and if those plan are approved start wrting the code.
+`notes/` (repo root, organized by module) is where issues and ideas get
+drafted before becoming work. Read every file under `notes/` at the start of
+each session. Plan against what's there; only start writing code once the
+user approves a plan.
+
+### Completed log
+
+`notes/completed.md` tracks notes that have been acted on. When a noted
+item is finished, append a line: `- YYYY-MM-DD: <what was completed>
+(notes/<file>)`. This is a log, not a plan — don't remove or edit past
+entries, only append.
