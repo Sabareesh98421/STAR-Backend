@@ -5,3 +5,8 @@ export enum ElysiaErrorCode {
     VALIDATION = 'VALIDATION',
     PARSE = 'PARSE',
 }
+
+// AppError.code values thrown outside a dedicated error class.
+export enum AppErrorCode {
+    BAD_REQUEST = 'BAD_REQUEST',
+}

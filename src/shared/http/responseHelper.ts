@@ -23,7 +23,7 @@ export function failure(error: AppError): HTTPResponse<FailureResponse> {
       message: error.message,
       error: {
         code: error.code,
-        ...(error.details === undefined ? {} : { details: error.details }),
+        ...(error.details === null ? {} : { details: error.details }),
       },
     },
   };
