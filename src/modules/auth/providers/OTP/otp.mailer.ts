@@ -17,7 +17,7 @@ const resolveMailError: Resolver<void> = (error) => {
         // Only surface the real transport error (e.g. ECONNREFUSED, auth failure)
         // outside production - it's what makes the response debuggable in dev,
         // but it's internal infra detail a real client shouldn't see.
-        appConfig.isProduction ? undefined : { reason },
+        appConfig.isProduction ? null : { reason },
     );
 };
 

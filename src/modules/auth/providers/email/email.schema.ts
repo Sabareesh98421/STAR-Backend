@@ -14,7 +14,7 @@ const passwordSchema = z.string().min(8, {
 export const emailSignupSchema = z
   .object({
     firstName: z.string().min(1).max(999),
-    secondName: z.string().max(1000).optional(),
+    secondName: z.string().max(1000).optional().transform((v) => v ?? null),
     email: z.email(),
     password: passwordSchema,
     confirmPassword: z.string(),

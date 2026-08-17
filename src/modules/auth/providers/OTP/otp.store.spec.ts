@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { connectRedis, disconnectRedis, getRedis } from "@/infrastructure/redis";
 import { TooManyRequestsError, ValidationError } from "@/shared/errors";
-import { saveOtp, consumeOtp } from "./otp.store";
+import { saveOtp, consumeOtp, otpKey, cooldownKey } from "./otp.store";
 
 const purpose = "test-purpose";
 const email = "otp-store-test@example.com";
@@ -12,7 +12,7 @@ test.describe("otp.store", () => {
     });
 
     test.afterAll(async () => {
-        await getRedis().del(`otp:${purpose}:${email}`, `otp:cooldown:${purpose}:${email}`);
+        await getRedis().del(otpKey(purpose, email), cooldownKey(purpose, email));
         await disconnectRedis();
     });
 
@@ -23,7 +23,7 @@ test.describe("otp.store", () => {
     });
 
     test("rejects a wrong code and locks out after too many attempts", async () => {
-        await getRedis().del(`otp:cooldown:${purpose}:${email}`);
+        await getRedis().del(cooldownKey(purpose, email));
         await saveOtp(purpose, email, "654321");
         for (let i = 0; i < 5; i++) {
             await expect(consumeOtp(purpose, email, "000000")).rejects.toThrow(ValidationError);
@@ -32,7 +32,7 @@ test.describe("otp.store", () => {
     });
 
     test("blocks a resend inside the cooldown window", async () => {
-        await getRedis().del(`otp:cooldown:${purpose}:${email}`);
+        await getRedis().del(cooldownKey(purpose, email));
         await saveOtp(purpose, email, "111111");
         await expect(saveOtp(purpose, email, "222222")).rejects.toThrow(TooManyRequestsError);
     });

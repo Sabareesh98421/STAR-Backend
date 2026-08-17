@@ -3,6 +3,7 @@ import { createHash, randomUUID, timingSafeEqual } from "node:crypto";
 import { getRedis } from "@/infrastructure/redis";
 import { ValidationError, TooManyRequestsError } from "@/shared/errors";
 import { otpConfig } from "@/config";
+import { TryCatch } from "@/shared/utils/try-catch";
 
 // Atomically deletes the OTP only if it's still the same one `token` names -
 // prevents discardOtp from wiping out a newer OTP saved by a concurrent request
@@ -17,11 +18,11 @@ return 0
 
 const { ttlSeconds: TTL_SECONDS, maxAttempts: MAX_ATTEMPTS, resendCooldownSeconds: RESEND_COOLDOWN_SECONDS } = otpConfig;
 
-function otpKey(purpose: string, identifier: string): string {
+export function otpKey(purpose: string, identifier: string): string {
     return `otp:${purpose}:${identifier}`;
 }
 
-function cooldownKey(purpose: string, identifier: string): string {
+export function cooldownKey(purpose: string, identifier: string): string {
     return `otp:cooldown:${purpose}:${identifier}`;
 }
 
@@ -41,12 +42,11 @@ export async function saveOtp(purpose: string, identifier: string, otp: string):
 
     const token = randomUUID();
     const hash = hashOtp(otp, key).toString("hex");
-    try {
-        await redis.multi().hset(key, { hash, attempts: 0, token }).expire(key, TTL_SECONDS).exec();
-    } catch (error) {
-        await redis.del(lockKey);
-        throw error;
-    }
+    await TryCatch.of(() => redis.multi().hset(key, { hash, attempts: 0, token }).expire(key, TTL_SECONDS).exec())
+        .onError(async (error) => {
+            await redis.del(lockKey);
+            throw error;
+        });
     return token;
 }
 
