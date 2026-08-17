@@ -1,7 +1,7 @@
 // server/router.ts
 import { logger } from '@/infrastructure/logger';
 import { authRoutes } from '@/modules/auth/routes';
-import { AppError, ElysiaErrorCode, ValidationError } from '@/shared/errors';
+import { AppError, AppErrorCode, ElysiaErrorCode, ValidationError } from '@/shared/errors';
 import response from '@/shared/http/response';
 import { failure } from '@/shared/http/responseHelper';
 import { socketRouter } from '@/socket/routes';
@@ -38,7 +38,7 @@ const masterRouter = new Elysia(routerConfig).derive(()=>({starttime:Date.now()}
 })
 .onError(({request,code,error})=>{
     const path = new URL(request.url).pathname
-    let field: string | undefined
+    let field: string | null = null
     let reason: string
     if (code === ElysiaErrorCode.VALIDATION) {
         const errPath = error.valueError?.path
@@ -51,7 +51,7 @@ const masterRouter = new Elysia(routerConfig).derive(()=>({starttime:Date.now()}
         reason = error instanceof Error ? error.message : "Unknown error"
     }
     const appError = code === ElysiaErrorCode.VALIDATION ? new ValidationError(reason, field ? { [field]: [reason] } : {})
-    : code === ElysiaErrorCode.PARSE ? new AppError(reason, "BAD_REQUEST", 400)
+    : code === ElysiaErrorCode.PARSE ? new AppError(reason, AppErrorCode.BAD_REQUEST, 400)
     : toAppError(error)
     logger.error(
         {
