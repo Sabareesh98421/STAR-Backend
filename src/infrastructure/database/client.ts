@@ -2,8 +2,7 @@
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@/generated/prisma/client";
 import { logger } from "@/infrastructure/logger";
-import { AppError } from "@/shared/errors";
-import appErrorCodes from "@/shared/errors/app.error.codes";
+import { ServiceUnavailableError } from "@/shared/errors";
 import { TryCatch, type Resolver } from "@/shared/utils/try-catch";
 import { databaseConfig } from "@/config";
 
@@ -11,11 +10,7 @@ let prisma: PrismaClient | null = null;
 
 const resolveConnectionError: Resolver<PrismaClient> = (error) => {
     logger.error(error);
-    throw new AppError(
-        "Failed to connect to Postgres",
-        appErrorCodes.dbStartError.toString(),
-        500
-    );
+    throw new ServiceUnavailableError("Failed to connect to Postgres");
 };
 
 export async function connectDatabase(): Promise<PrismaClient> {
@@ -31,11 +26,7 @@ export async function connectDatabase(): Promise<PrismaClient> {
 
 export function getDb(): PrismaClient {
     if (!prisma) {
-        throw new AppError(
-            "Db is not yet started, connect it first",
-            appErrorCodes.dbStartError.toString(),
-            500
-        );
+        throw new ServiceUnavailableError("Database is not connected");
     }
     return prisma;
 }
