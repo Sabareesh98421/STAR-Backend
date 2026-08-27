@@ -2,8 +2,7 @@
 import type { SendMailOptions } from "nodemailer";
 import { getMailer } from "@/infrastructure/mailer";
 import { logger } from "@/infrastructure/logger";
-import { AppError } from "@/shared/errors";
-import appErrorCodes from "@/shared/errors/app.error.codes";
+import { AppError, AppErrorCode } from "@/shared/errors";
 import { mailerConfig, otpConfig, appConfig } from "@/config";
 import { TryCatch, type Resolver } from "@/shared/utils/try-catch";
 
@@ -12,7 +11,7 @@ const resolveMailError: Resolver<void> = (error) => {
     const reason = error instanceof Error ? error.message : String(error);
     throw new AppError(
         "Failed to send OTP email",
-        appErrorCodes.mailSendError.toString(),
+        AppErrorCode.MAIL_SEND_FAILED,
         502,
         // Only surface the real transport error (e.g. ECONNREFUSED, auth failure)
         // outside production - it's what makes the response debuggable in dev,
