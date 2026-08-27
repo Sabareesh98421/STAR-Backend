@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 import { connectRedis, disconnectRedis, getRedis } from "@/infrastructure/redis";
 import signupService from "./email.signup";
 import { getPendingSignup, pendingSignupKey } from "./email.signup.store";
-import type { EmailSignupRequest } from "../providers/email/email.schema";
+import type { EmailSignupRequest } from "@/modules/auth/providers/email";
 
 const email = "email-signup-test@example.com";
 

@@ -1,9 +1,7 @@
 
-import response from '@/shared/http/response';
-import { success } from '@/shared/http/responseHelper';
-import { toResponse } from '@/shared/http/resolveAppError';
+import { response, success, toResponse } from '@/shared/http';
 import { TryCatch } from '@/shared/utils/try-catch';
-import type { EmailSignupRequest } from '../providers/email/email.schema';
+import type { EmailSignupRequest } from '@/modules/auth/providers/email';
 import { savePendingSignup } from './email.signup.store';
 
 export default function signupHandler(body: EmailSignupRequest) {

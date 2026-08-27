@@ -1,7 +1,6 @@
 export { AppError } from './app.error.ts';
-export { NotFoundError } from './not-found.error.ts';
-export { ValidationError } from './validation.error.ts';
-export { UnauthorizedError } from './unauthorized.error.ts';
-export { ConflictError } from './conflict.error.ts';
-export { TooManyRequestsError } from './too-many-requests.error.ts';
-export { ElysiaErrorCode, AppErrorCode } from './elysia.error.codes.ts';
+export { AppErrorCode } from './app.error.codes.ts';
+export { ElysiaErrorCode } from './elysia.error.codes.ts';
+
+export { NotFoundError, ValidationError, UnauthorizedError, ConflictError, TooManyRequestsError } from './domain';
+export { DatabaseError, ServiceUnavailableError } from './infrastructure';

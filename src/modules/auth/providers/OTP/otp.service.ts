@@ -1,16 +1,15 @@
 // otp.service.ts
-import response from '@/shared/http/response';
-import { success } from '@/shared/http/responseHelper';
-import { toResponse } from '@/shared/http/resolveAppError';
+import { response, success, toResponse } from '@/shared/http';
 import { TryCatch } from '@/shared/utils/try-catch';
 import { NotFoundError, ValidationError } from '@/shared/errors';
 import { generateOtp } from './otp.generator';
 import { saveOtp, consumeOtp, discardOtp } from './otp.store';
 import { sendOtpEmail } from './otp.mailer';
-import { OtpPurpose, type OtpRequestBody, type OtpVerifyBody } from './otp.schema';
+import { OtpPurpose } from '@/modules/auth/shared';
+import type { OtpRequestBody, OtpVerifyBody } from './otp.schema';
 import { otpConfig } from '@/config';
 import { userRepository } from '@/infrastructure/database';
-import { hasPendingSignup, getPendingSignup, deletePendingSignup } from '../../service/email.signup.store';
+import { hasPendingSignup, getPendingSignup, deletePendingSignup } from '@/modules/auth/service';
 
 export function requestOtpHandler(body: OtpRequestBody) {
     return TryCatch.of(() => requestOtp(body)).onError(toResponse);

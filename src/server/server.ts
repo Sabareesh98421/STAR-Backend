@@ -40,15 +40,28 @@ const server = startServer(serverConfig.port, serverConfig.maxPortAttempts);
 
 // Mandatory cleanup: release the port and close the DB/Redis connections on
 // shutdown instead of leaving them dangling for the next start to trip over.
-async function shutdown(signal: string): Promise<void> {
+let shuttingDown = false;
+
+async function shutdown(signal: string, exitCode: number = 0): Promise<void> {
+    if (shuttingDown) return;
+    shuttingDown = true;
     logger.info(`Received ${signal}, closing server`);
     await server.stop();
     await disconnectDatabase();
     await disconnectRedis();
-    process.exit(0);
+    process.exit(exitCode);
 }
 
 process.on('SIGINT', () => void shutdown('SIGINT'));
 process.on('SIGTERM', () => void shutdown('SIGTERM'));
+
+process.on('uncaughtException', (error) => {
+    logger.fatal({ err: error }, 'Uncaught exception, shutting down');
+    void shutdown('uncaughtException', 1);
+});
+process.on('unhandledRejection', (reason) => {
+    logger.fatal({ err: reason }, 'Unhandled promise rejection, shutting down');
+    void shutdown('unhandledRejection', 1);
+});
 
 export default server;

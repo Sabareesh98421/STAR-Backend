@@ -1,16 +1,14 @@
 // try-catch.ts
-import { AppError } from '@/shared/errors';
-import appErrorCodes from '@/shared/errors/app.error.codes';
+import { AppError, AppErrorCode } from '@/shared/errors';
 import { logger } from '@/infrastructure/logger';
+import type { Resolver } from './try-catch.types';
 
 export const NEXT = Symbol("tryCatch.next");
-
-export type Resolver<T> = (error: unknown) => T | typeof NEXT | Promise<T | typeof NEXT>;
 
 // Passes an existing AppError through unchanged, wraps anything else as a generic one.
 export function toAppError(error: unknown): AppError {
     if (error instanceof AppError) return error;
-    return new AppError("Internal server error", appErrorCodes.internalError.toString(), 500);
+    return new AppError("Internal server error", AppErrorCode.INTERNAL_ERROR, 500);
 }
 
 // Runs fn; on failure, resolver may recover it, otherwise it's normalized to an AppError.

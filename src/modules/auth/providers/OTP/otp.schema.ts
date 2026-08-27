@@ -1,18 +1,17 @@
 import { z } from 'zod';
 import { otpConfig } from '@/config';
+import { OtpPurpose } from '@/modules/auth/shared';
 
-export enum OtpPurpose {
-  VerifyEmail = 'verify-email',
-}
+const purposeSchema = z.enum(OtpPurpose).default(OtpPurpose.VerifyEmail);
 
 export const otpRequestSchema = z.object({
   email: z.email(),
-  purpose: z.string().min(1).max(50).default(OtpPurpose.VerifyEmail),
+  purpose: purposeSchema,
 });
 
 export const otpVerifySchema = z.object({
   email: z.email(),
-  purpose: z.string().min(1).max(50).default(OtpPurpose.VerifyEmail),
+  purpose: purposeSchema,
   otp: z.string().length(otpConfig.length),
 });
 
