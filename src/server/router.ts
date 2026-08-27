@@ -2,9 +2,8 @@
 import { logger } from '@/infrastructure/logger';
 import { authRoutes } from '@/modules/auth/routes';
 import { AppError, AppErrorCode, ElysiaErrorCode, ValidationError } from '@/shared/errors';
-import response from '@/shared/http/response';
-import { failure } from '@/shared/http/responseHelper';
-import { socketRouter } from '@/socket/routes';
+import { response, failure } from '@/shared/http';
+import { socketRouter } from '@/socket';
 import { toAppError } from '@/shared/utils/try-catch';
 import { Elysia } from 'elysia';
 const routerConfig={
