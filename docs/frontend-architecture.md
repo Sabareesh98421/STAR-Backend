@@ -18,15 +18,19 @@ WebSocket, one folder changes.
 apps/web/app/
   domain/       concepts and pure logic. No Vue, no fetch, no DOM.
   transport/    the only folder that knows about the network.
-  modules/      feature modules. Each index.ts is its public contract.
-  shared/       cross-cutting primitives and utils.
-  pages/        Nuxt routing only. Thin; composes modules.
-  assets/styles tokens.css, base.css.
+  composables/  stateful behaviour. One concern each.
+  components/   presentation, named after the design's own primitives.
+  assets/css    main.css: Tailwind theme carrying the design tokens.
 ```
 
-Barrels carry over from the backend verbatim: a folder's `index.ts` is its
-public contract, parents aggregate children, children never import from a
-parent barrel. No module reaches into another module's internals.
+`components/` and `composables/` are Nuxt's auto-import conventions rather
+than the backend's `modules/`. Fighting them to mirror a folder name would
+cost more than the symmetry is worth; the boundary that actually matters,
+`domain/` and `transport/`, is kept.
+
+The backend's barrel discipline applies where there are barrels to have. Nuxt
+resolves components and composables by convention, so an index.ts per folder
+would be a second, competing resolution mechanism rather than a contract.
 
 Terminology is shared with the backend on purpose: Conversation, Run, Agent,
 Response, Review, Leader. Same words, same meanings, both sides.
@@ -120,12 +124,24 @@ comparison at any width, because N is unknown.
 
 ## 6. What is deliberately absent
 
-No Pinia: Nuxt's `useState` plus per-run stores created and disposed with the
-run covers it, and a global store for per-run data is how obsolete streaming
-state gets retained. No Tailwind: agent colour is computed at runtime for an
-unknown N, which a static utility system cannot express; tokens plus scoped SFC
-styles can. No component library, no animation library, no virtualisation
-until a list actually measures slow.
+No Pinia: a per-run store created and disposed with the run covers it, and a
+global store for per-run data is how obsolete streaming state gets retained.
+No animation library: the design specifies two curves and two durations. No
+virtualisation until a list actually measures slow.
 
-Each of these gets added the moment something measures worse without it, and
-not before.
+Tailwind and Nuxt UI *are* used. An earlier draft of this document argued
+against Tailwind on the grounds that agent colour had to be generated at
+runtime for an unknown N, which a static utility system cannot express. That
+reasoning died with the premise: the design carries identity through four
+accent opacities and four glyphs, not through generated hue, so there is
+nothing dynamic to express. Tailwind's default spacing scale is also already
+the design's own (4 8 12 16 24 32 48).
+
+Nuxt UI earns its place for Tailwind 4, color-mode and fonts, which it
+bundles. Its *components* are mostly unused: the FIELD, rail, peek and console
+are bespoke geometry, and its `defineShortcuts` did not work here and was
+replaced by one listener. A dependency is kept for the parts that work, not
+adopted wholesale.
+
+Each absent thing gets added the moment something measures worse without it,
+and not before.
