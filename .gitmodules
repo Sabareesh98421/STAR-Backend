@@ -1,0 +1,3 @@
+[submodule "apps/e2e/shared_browser"]
+	path = apps/e2e/shared_browser
+	url = git@github.com:Sabareesh98421/shared_browser.git
