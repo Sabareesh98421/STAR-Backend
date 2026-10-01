@@ -1,0 +1,132 @@
+@import 'tailwindcss';
+@import '@nuxt/ui';
+
+/*
+ * Design tokens from the Claude Design handoff, expressed as Tailwind theme
+ * variables so they are available as utilities (bg-surface, text-ink-40,
+ * rounded-panel) instead of hand-written rules.
+ *
+ * Spacing is deliberately absent: the design's 4 8 12 16 24 32 48 is already
+ * Tailwind's default scale at 1 2 3 4 6 8 12.
+ */
+
+@theme {
+    /* Ink is one colour at many alphas over the surface, never a set of greys.
+       --ink-rgb flips per theme below and every step follows it. */
+    --color-ink-85: rgba(var(--ink-rgb), 0.85);
+    --color-ink-75: rgba(var(--ink-rgb), 0.75);
+    --color-ink-45: rgba(var(--ink-rgb), 0.45);
+    --color-ink-40: rgba(var(--ink-rgb), 0.4);
+    --color-ink-30: rgba(var(--ink-rgb), 0.3);
+    --color-ink-26: rgba(var(--ink-rgb), 0.26);
+    --color-ink-18: rgba(var(--ink-rgb), 0.18);
+    --color-ink-12: rgba(var(--ink-rgb), 0.12);
+    --color-ink-08: rgba(var(--ink-rgb), 0.08);
+    --color-ink-04: rgba(var(--ink-rgb), 0.04);
+
+    --color-bg: var(--ground);
+    --color-surface: var(--sheet);
+    --color-body: var(--body-ink);
+
+    /* Sheet A: the accent appears at exactly four strengths. */
+    --color-accent: var(--accent-100);
+    --color-accent-60: var(--accent-a60);
+    --color-accent-40: var(--accent-a40);
+    --color-accent-18: var(--accent-a18);
+
+    --font-sans: 'IBM Plex Sans', system-ui, sans-serif;
+    --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+
+    --text-10: 10px;
+    --text-11: 11px;
+    --text-12: 12px;
+    --text-13: 13px;
+    --text-16: 16px;
+
+    --radius-chip: 8px;
+    --radius-card: 12px;
+    --radius-panel: 16px;
+
+    --blur-glass: 24px;
+    --blur-morph: 32px;
+    --blur-spot: 40px;
+
+    /* Sheet C. The FIELD travels on the morph curve; everything else collapses. */
+    --ease-morph: cubic-bezier(0.32, 0.72, 0, 1);
+    --ease-collapse: cubic-bezier(0.16, 1, 0.3, 1);
+
+    --shadow-panel: 0 24px 48px var(--cast);
+    --shadow-rail: -32px 0 64px var(--cast);
+    --shadow-spot: 0 32px 64px var(--cast-deep);
+}
+
+:root {
+    --ink-rgb: 0, 0, 0;
+    --ground: whitesmoke;
+    --sheet: #ffffff;
+    --body-ink: #1a1a1a;
+    --accent-100: #a7761c;
+    --accent-a60: rgba(167, 118, 28, 0.6);
+    --accent-a40: rgba(167, 118, 28, 0.4);
+    --accent-a18: rgba(167, 118, 28, 0.18);
+    --cast: rgba(0, 0, 0, 0.1);
+    --cast-deep: rgba(0, 0, 0, 0.12);
+
+    /* Hand anything from Nuxt UI the same accent, so a stock component never
+       arrives in its own palette. */
+    --ui-primary: var(--accent-100);
+    --ui-bg: var(--ground);
+    --ui-text: var(--body-ink);
+}
+
+.dark {
+    --ink-rgb: 255, 255, 255;
+    --ground: #08090a;
+    --sheet: #0e0f11;
+    --body-ink: #e8e6e3;
+    --accent-100: #e3a94e;
+    --accent-a60: rgba(227, 169, 78, 0.6);
+    --accent-a40: rgba(227, 169, 78, 0.4);
+    --accent-a18: rgba(227, 169, 78, 0.18);
+    --cast: rgba(0, 0, 0, 0.5);
+    --cast-deep: rgba(0, 0, 0, 0.6);
+}
+
+@layer base {
+    body {
+        background: var(--color-bg);
+        color: var(--color-body);
+        font-family: var(--font-sans);
+        font-size: var(--text-13);
+        -webkit-font-smoothing: antialiased;
+    }
+
+    /* Meta, paths, counts and shortcuts line up down a column, and digits do
+       not jitter as they update. */
+    .font-mono {
+        font-variant-numeric: tabular-nums;
+    }
+
+    /* This UI streams continuously; constant motion with no opt-out is hostile. */
+    @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+            animation-duration: 0.01ms !important;
+            transition-duration: 0.01ms !important;
+        }
+    }
+}
+
+/* The one piece of choreography Tailwind cannot express: Sheet C's asymmetry,
+   where results wait for the travel on the way in and leave immediately on the
+   way out. */
+@utility results-in {
+    animation: results-in 240ms var(--ease-morph) 240ms both;
+}
+
+@keyframes results-in {
+    from {
+        opacity: 0;
+    }
+}

@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics><meta name="design_doc_mode" content="canvas"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet"><style>
+body{margin:0;background:#08090A;color:#E8E6E3;font-family:'IBM Plex Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:#E3A94E;text-decoration:none}a:hover{color:#f0bd6b}
+@keyframes none-used{from{opacity:1}to{opacity:1}}
+</style></helmet>
+
+<section id="A" style="padding:48px;border-bottom:1px solid rgba(255,255,255,.08)">
+<div style="display:flex;align-items:baseline;gap:12px;margin-bottom:8px">
+<a href="#A" style="font:500 10px/1 'IBM Plex Mono',monospace;padding:5px 8px;background:rgba(227,169,78,.18);color:#E3A94E;border-radius:4px">SHEET A</a>
+<h1 style="margin:0;font:600 16px/1 'IBM Plex Sans',sans-serif;letter-spacing:.01em">Primitives</h1>
+<span style="font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)">four floating objects · 1:1 · all states</span>
+</div>
+<p style="margin:0 0 40px;font:400 12px/1.6 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4);max-width:760px">accent oklch amber, used at 100 / 60 / 40 / 18 % · spacing 4 8 12 16 24 32 48 · radii 8 chip · 12 card · 16 panel · glass blur 24px, 8% fill, 1px 12% top hairline · spotlight only blur 40px, 40% hairline</p>
+
+<div style="display:flex;flex-wrap:wrap;gap:48px;align-items:flex-start">
+
+<div style="display:flex;flex-direction:column;gap:16px">
+<div style="display:flex;align-items:baseline;gap:10px"><span style="font:500 10.5px/1 'IBM Plex Mono',monospace;padding:4px 7px;background:rgba(255,255,255,.08);border-radius:5px;color:#E8E6E3">PANEL</span><span style="font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)">glass · radius 16 · hairline top edge</span></div>
+
+<div style="display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start">
+
+<div style="display:flex;flex-direction:column;gap:8px">
+<div style="width:320px;padding:16px;background:rgba(255,255,255,.08);backdrop-filter:blur(24px);border-radius:16px;border-top:1px solid rgba(255,255,255,.12);box-shadow:0 24px 48px rgba(0,0,0,.5)">
+<div style="font:400 13px/1.4 'IBM Plex Sans',sans-serif;color:rgba(255,255,255,.85)">console — instance</div>
+<div style="margin-top:8px;font:400 12px/1.5 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)">blur 24 · fill 8% · hairline 12%</div>
+</div>
+<div style="font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)">base glass</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:8px">
+<div style="width:320px;padding:16px;background:rgba(255,255,255,.08);backdrop-filter:blur(40px);border-radius:16px;border-top:1px solid rgba(255,255,255,.4);box-shadow:0 32px 64px rgba(0,0,0,.6)">
+<div style="font:400 13px/1.4 'IBM Plex Sans',sans-serif;color:rgba(255,255,255,.85)">spotlight — instance</div>
+<div style="margin-top:8px;font:400 12px/1.5 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)">blur 40 · hairline 40% refractive</div>
+</div>
+<div style="font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)">refractive edge — spotlight only</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:8px">
+<div style="width:260px;padding:12px 16px;background:rgba(255,255,255,.08);backdrop-filter:blur(24px);border-radius:16px;border-top:1px solid rgba(255,255,255,.12);box-shadow:0 24px 48px rgba(0,0,0,.5);display:flex;align-items:center;gap:12px">
+<span style="width:6px;height:6px;border-radius:50%;background:#E3A94E;flex:none"></span>
+<span style="font:400 13px/1.4 'IBM Plex Sans',sans-serif">Saved Cache.ts</span>
+<span style="margin-left:auto;font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)">⌘S</span>
+</div>
+<div style="font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)">toast — instance · z 40</div>
+</div>
+
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:16px">
+<div style="display:flex;align-items:baseline;gap:10px"><span style="font:500 10.5px/1 'IBM Plex Mono',monospace;padding:4px 7px;background:rgba(255,255,255,.08);border-radius:5px">FIELD</span><span style="font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)">52px · one persistent object · travels, never duplicates</span></div>
+
+<div style="display:flex;flex-direction:column;gap:20px">
+<div style="display:flex;flex-direction:column;gap:8px">
+<div style="width:720px;height:52px;display:flex;align-items:center;gap:12px;padding:0 16px;background:rgba(255,255,255,.08);backdrop-filter:blur(24px);border-radius:16px;border-top:1px solid rgba(255,255,255,.12);box-sizing:border-box">
+<span style="font:500 12px/1 'IBM Plex Mono',monospace;padding:5px 8px;border-radius:8px;background:rgba(227,169,78,.18);color:#E3A94E">agent</span>
+<span style="width:1px;height:18px;background:#E3A94E"></span>
+<span style="font:400 13px/1 'IBM Plex Sans',sans-serif;color:rgba(255,255,255,.4)">describe an edit</span>
+</div>
+<div style="font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)">rest · composer · 720 · chip left · caret · no border</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:8px">
+<div style="width:640px;height:52px;display:flex;align-items:center;gap:12px;padding:0 16px;background:rgba(255,255,255,.08);backdrop-filter:blur(40px);border-radius:16px;border-top:1px solid rgba(255,255,255,.4);box-sizing:border-box">
+<span style="font:400 13px/1 'IBM Plex Mono',monospace;color:#E8E6E3">auth</span>
+<span style="width:1px;height:18px;background:#E3A94E"></span>
+</div>
+<div style="font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)">spotlight input · 640 · chip gone · typed</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:8px">
+<div style="width:44px;height:44px;border-radius:16px;background:rgba(255,255,255,.08);backdrop-filter:blur(24px);border-top:1px solid rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center">
+<span style="width:1px;height:14px;background:rgba(227,169,78,.6)"></span>
+</div>
+<div style="font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)">collapsed pill · focus mode · 180ms ease-out</div>
+</div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:16px">
+<div style="display:flex;align-items:baseline;gap:10px"><span style="font:500 10.5px/1 'IBM Plex Mono',monospace;padding:4px 7px;background:rgba(255,255,255,.08);border-radius:5px">ROW</span><span style="font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)">28–32px · five slots · shortcut cell empty by default</span></div>
+
+<div style="width:560px;display:flex;flex-direction:column;gap:4px">
+<div style="display:flex;align-items:center;gap:12px;height:20px;font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)">
+<span style="width:12px">1</span><span style="width:160px">2 label</span><span style="width:150px">3 meta 40%</span><span style="width:80px">4 shortcut 30%</span><span>5 action</span>
+</div>
+<div style="height:32px;display:flex;align-items:center;gap:12px;padding:0 12px;border-radius:8px;background:rgba(255,255,255,.04);box-sizing:border-box">
+<span style="width:12px;font:400 12px/1 'IBM Plex Mono',monospace;color:#E3A94E">●</span>
+<span style="width:160px;font:400 13px/1 'IBM Plex Sans',sans-serif">Blob retained in loop</span>
+<span style="width:150px;font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)">Cache.ts 41 · a3f21c</span>
+<span style="width:80px"></span>
+<span style="font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)">⌥↵</span>
+</div>
+<div style="height:24px"></div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<div style="display:flex;align-items:center;gap:24px">
+<span style="display:flex;align-items:center;gap:8px;font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)"><span style="color:#E3A94E">●</span> accent solid</span>
+<span style="display:flex;align-items:center;gap:8px;font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)"><span style="color:rgba(255,255,255,.18)">○</span> 18% white</span>
+<span style="display:flex;align-items:center;gap:8px;font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)"><span style="color:rgba(227,169,78,.6)">◐</span> running</span>
+<span style="display:flex;align-items:center;gap:8px;font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)"><span style="color:rgba(255,255,255,.3)">◌</span> 30% muted</span>
+</div>
+<div style="font:400 12px/1.6 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)">instances: tree row · file result · review finding · agent thread</div>
+</div>
+</div>
+
+<div style="width:560px;display:flex;flex-direction:column;gap:2px;margin-top:8px">
+<div style="height:28px;display:flex;align-items:center;gap:12px;padding:0 12px;box-sizing:border-box">
+<span style="width:12px;font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.3)">◌</span>
+<span style="flex:1;font:400 13px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.85)">Cache.ts</span>
+<span style="font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)">src/cache</span>
+</div>
+<div style="height:28px;display:flex;align-items:center;gap:12px;padding:0 12px;box-sizing:border-box">
+<span style="width:12px;font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(227,169,78,.6)">◐</span>
+<span style="flex:1;font:400 13px/1 'IBM Plex Sans',sans-serif;color:rgba(255,255,255,.85)">Refactor auth middleware</span>
+<span style="font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)">3 of 7</span>
+</div>
+<div style="height:28px;display:flex;align-items:center;gap:12px;padding:0 12px;box-sizing:border-box">
+<span style="width:12px;font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.18)">○</span>
+<span style="flex:1;font:400 13px/1 'IBM Plex Sans',sans-serif;color:rgba(255,255,255,.4)">6 closed</span>
+</div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:16px">
+<div style="display:flex;align-items:baseline;gap:10px"><span style="font:500 10.5px/1 'IBM Plex Mono',monospace;padding:4px 7px;background:rgba(255,255,255,.08);border-radius:5px">BLOCK</span><span style="font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)">inline · 4% fill · 2px accent rail · radius 0 · pushes content down</span></div>
+
+<div style="width:560px;background:#101114;border-radius:12px;border:1px solid rgba(255,255,255,.08);padding:16px 0;font:400 13px/22px 'IBM Plex Mono',monospace">
+<div style="display:flex;gap:16px;padding:0 16px"><span style="color:rgba(255,255,255,.3);width:20px;text-align:right">37</span><span style="color:rgba(255,255,255,.75)">  this.entries.delete(key)</span></div>
+<div style="background:rgba(255,255,255,.04);border-left:2px solid #E3A94E;padding:12px 16px;margin:8px 0">
+<div style="font:400 12px/1.5 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)">peek · requested edit</div>
+<div style="color:rgba(255,255,255,.85);margin-top:4px">  this.listeners.delete(key)</div>
+<div style="display:flex;justify-content:flex-end;gap:16px;margin-top:8px;font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)"><span>Adopt ⌥↵</span><span>Dismiss ⌥⌫</span></div>
+</div>
+<div style="display:flex;gap:16px;padding:0 16px"><span style="color:rgba(255,255,255,.3);width:20px;text-align:right">38</span><span style="color:rgba(255,255,255,.75)">  }</span></div>
+</div>
+<div style="font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)">instances: peek · console output</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:16px">
+<div style="display:flex;align-items:baseline;gap:10px"><span style="font:500 10.5px/1 'IBM Plex Mono',monospace;padding:4px 7px;background:rgba(227,169,78,.18);color:#E3A94E;border-radius:5px">HINT LAYER</span><span style="font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)">⌥ held 400ms fills every visible shortcut cell at 30% · release clears · the only discoverability surface</span></div>
+
+<div style="display:flex;flex-wrap:wrap;gap:32px;align-items:flex-start">
+<div style="display:flex;flex-direction:column;gap:8px">
+<div style="width:420px;display:flex;flex-direction:column;gap:2px">
+<div style="height:32px;display:flex;align-items:center;gap:12px;padding:0 12px;border-radius:8px;background:rgba(255,255,255,.04);box-sizing:border-box">
+<span style="width:12px;font:400 12px/1 'IBM Plex Mono',monospace;color:#E3A94E">●</span>
+<span style="flex:1;font:400 13px/1 'IBM Plex Sans',sans-serif">Sync read on hot path</span>
+<span style="font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)">Loader.ts 24 · new</span>
+<span style="width:56px"></span>
+</div>
+</div>
+<div style="width:420px;padding:16px;background:rgba(255,255,255,.08);backdrop-filter:blur(24px);border-radius:16px;border-top:1px solid rgba(255,255,255,.12);box-sizing:border-box">
+<div style="display:flex;align-items:center;gap:12px;height:28px"><span style="width:12px;font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.3)">◌</span><span style="flex:1;font:400 13px/1 'IBM Plex Mono',monospace">Cache.ts</span><span style="width:56px"></span></div>
+<div style="display:flex;align-items:center;gap:12px;height:28px"><span style="width:12px;font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.3)">◌</span><span style="flex:1;font:400 13px/1 'IBM Plex Mono',monospace">authGuard.ts</span><span style="width:56px"></span></div>
+</div>
+<div style="font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)">⌥ released — cells empty</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:8px">
+<div style="width:420px;display:flex;flex-direction:column;gap:2px">
+<div style="height:32px;display:flex;align-items:center;gap:12px;padding:0 12px;border-radius:8px;background:rgba(255,255,255,.04);box-sizing:border-box">
+<span style="width:12px;font:400 12px/1 'IBM Plex Mono',monospace;color:#E3A94E">●</span>
+<span style="flex:1;font:400 13px/1 'IBM Plex Sans',sans-serif">Sync read on hot path</span>
+<span style="font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)">Loader.ts 24 · new</span>
+<span style="width:56px;text-align:right;font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.3)">⌥↵</span>
+</div>
+</div>
+<div style="width:420px;padding:16px;background:rgba(255,255,255,.08);backdrop-filter:blur(24px);border-radius:16px;border-top:1px solid rgba(255,255,255,.12);box-sizing:border-box">
+<div style="display:flex;align-items:center;gap:12px;height:28px"><span style="width:12px;font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.3)">◌</span><span style="flex:1;font:400 13px/1 'IBM Plex Mono',monospace">Cache.ts</span><span style="width:56px;text-align:right;font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.3)">⌥1</span></div>
+<div style="display:flex;align-items:center;gap:12px;height:28px"><span style="width:12px;font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.3)">◌</span><span style="flex:1;font:400 13px/1 'IBM Plex Mono',monospace">authGuard.ts</span><span style="width:56px;text-align:right;font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.3)">⌥2</span></div>
+</div>
+<div style="font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)">⌥ held — cells filled at 30%</div>
+</div>
+</div>
+</div>
+
+</div>
+</section>
+
+<section id="B" style="padding:48px;border-bottom:1px solid rgba(255,255,255,.08)">
+<div style="display:flex;align-items:baseline;gap:12px;margin-bottom:8px">
+<a href="#B" style="font:500 10px/1 'IBM Plex Mono',monospace;padding:5px 8px;background:rgba(227,169,78,.18);color:#E3A94E;border-radius:4px">SHEET B</a>
+<h1 style="margin:0;font:600 16px/1 'IBM Plex Sans',sans-serif">Compositions</h1>
+<span style="font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)">ledger-api · src/cache/Cache.ts · Refactor auth middleware · 3 of 7</span>
+</div>
+<p style="margin:0 0 40px;font:400 12px/1.6 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)">frames drawn at 1280 × 800 · z: editor 0 · booster 20 · composer 30 · console 35 · toast 40 · spotlight 50</p>
+
+<div style="display:flex;flex-wrap:wrap;gap:48px;align-items:flex-start">
+
+<div style="display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:baseline;gap:10px"><span style="font:500 10.5px/1 'IBM Plex Mono',monospace;padding:4px 7px;background:rgba(255,255,255,.08);border-radius:5px">FRAME 1</span><span style="font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)">default · rail 360 overlays right edge · composer at rest</span></div>
+<div style="position:relative;width:1280px;height:800px;overflow:hidden;background:#0E0F11;border-radius:12px;border:1px solid rgba(255,255,255,.08)">
+  <div style="position:absolute;inset:0;padding:56px 0 0;font:400 13px/22px 'IBM Plex Mono',monospace">
+    <div style="display:flex;gap:24px;padding:0 12px"><span style="width:24px;text-align:right;color:rgba(255,255,255,.3)">34</span><span style="color:rgba(255,255,255,.75)">private evict(now: number) {</span></div>
+    <div style="display:flex;gap:24px;padding:0 12px"><span style="width:24px;text-align:right;color:rgba(255,255,255,.3)">35</span><span style="color:rgba(255,255,255,.75)">  for (const [key, entry] of this.entries) {</span></div>
+    <div style="display:flex;gap:24px;padding:0 12px"><span style="width:24px;text-align:right;color:rgba(255,255,255,.3)">36</span><span style="color:rgba(255,255,255,.75)">    if (entry.expires > now) continue</span></div>
+    <div style="display:flex;gap:24px;padding:0 12px;position:relative"><span style="position:absolute;left:0;top:6px;width:2px;height:10px;background:rgba(255,255,255,.3)"></span><span style="width:24px;text-align:right;color:rgba(255,255,255,.3)">37</span><span style="color:rgba(255,255,255,.75)">    this.entries.delete(key)</span></div>
+    <div style="display:flex;gap:24px;padding:0 12px;position:relative"><span style="position:absolute;left:0;top:6px;width:2px;height:10px;background:rgba(255,255,255,.3)"></span><span style="width:24px;text-align:right;color:rgba(255,255,255,.3)">38</span><span style="color:rgba(255,255,255,.75)">    this.listeners.get(key)?.forEach(fn => fn())</span></div>
+    <div style="background:rgba(255,255,255,.04);border-left:2px solid #E3A94E;padding:12px 12px 12px 34px;margin:8px 0;width:720px;box-sizing:border-box">
+      <div style="font:400 12px/1.4 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)">peek · agent edit · pushes code down</div>
+      <div style="color:rgba(255,255,255,.85);margin-top:4px">    this.listeners.delete(key)</div>
+      <div style="display:flex;justify-content:flex-end;gap:16px;margin-top:8px;font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)"><span>Adopt ⌥↵</span><span>Dismiss ⌥⌫</span></div>
+    </div>
+    <div style="display:flex;gap:24px;padding:0 12px"><span style="width:24px;text-align:right;color:rgba(255,255,255,.3)">39</span><span style="color:rgba(255,255,255,.75)">  }</span></div>
+    <div style="display:flex;gap:24px;padding:0 12px"><span style="width:24px;text-align:right;color:rgba(255,255,255,.3)">40</span><span style="color:rgba(255,255,255,.75)">}</span></div>
+    <div style="display:flex;gap:24px;padding:0 12px"><span style="width:24px;text-align:right;color:rgba(255,255,255,.3)">41</span><span></span></div>
+    <div style="display:flex;gap:24px;padding:0 12px"><span style="width:24px;text-align:right;color:rgba(255,255,255,.3)">42</span><span style="color:rgba(255,255,255,.75)">read&lt;T&gt;(key: string): T | undefined {</span></div>
+    <div style="display:flex;gap:24px;padding:0 12px"><span style="width:24px;text-align:right;color:rgba(255,255,255,.3)">43</span><span style="color:rgba(255,255,255,.75)">  const entry = this.entries.get(key)</span></div>
+    <div style="display:flex;gap:24px;padding:0 12px"><span style="width:24px;text-align:right;color:rgba(255,255,255,.3)">44</span><span style="color:rgba(255,255,255,.75)">  if (!entry) return undefined</span></div>
+    <div style="display:flex;gap:24px;padding:0 12px"><span style="width:24px;text-align:right;color:rgba(255,255,255,.3)">45</span><span style="color:rgba(255,255,255,.75)">  this.hits += 1</span></div>
+    <div style="display:flex;gap:24px;padding:0 12px"><span style="width:24px;text-align:right;color:rgba(255,255,255,.3)">46</span><span style="color:rgba(255,255,255,.75)">  return entry.value as T</span></div>
+    <div style="display:flex;gap:24px;padding:0 12px"><span style="width:24px;text-align:right;color:rgba(255,255,255,.3)">47</span><span style="color:rgba(255,255,255,.75)">}</span></div>
+    <div style="display:flex;gap:24px;padding:0 12px"><span style="width:24px;text-align:right;color:rgba(255,255,255,.3)">48</span><span></span></div>
+    <div style="display:flex;gap:24px;padding:0 12px"><span style="width:24px;text-align:right;color:rgba(255,255,255,.3)">49</span><span style="color:rgba(255,255,255,.75)">write&lt;T&gt;(key: string, value: T, ttl = 30_000) {</span></div>
+    <div style="display:flex;gap:24px;padding:0 12px"><span style="width:24px;text-align:right;color:rgba(255,255,255,.3)">50</span><span style="color:rgba(255,255,255,.75)">  this.entries.set(key, {</span></div>
+    <div style="display:flex;gap:24px;padding:0 12px"><span style="width:24px;text-align:right;color:rgba(255,255,255,.3)">51</span><span style="color:rgba(255,255,255,.75)">    value,</span></div>
+    <div style="display:flex;gap:24px;padding:0 12px"><span style="width:24px;text-align:right;color:rgba(255,255,255,.3)">52</span><span style="color:rgba(255,255,255,.75)">    expires: Date.now() + ttl,</span></div>
+    <div style="display:flex;gap:24px;padding:0 12px"><span style="width:24px;text-align:right;color:rgba(255,255,255,.3)">53</span><span style="color:rgba(255,255,255,.75)">  })</span></div>
+    <div style="display:flex;gap:24px;padding:0 12px"><span style="width:24px;text-align:right;color:rgba(255,255,255,.3)">54</span><span style="color:rgba(255,255,255,.75)">}</span></div>
+  </div>
+
+  <div style="position:absolute;left:12px;top:12px;display:flex;gap:0;font:400 12px/1 'IBM Plex Mono',monospace">
+    <span style="color:rgba(255,255,255,.45)">src/cache/</span><span style="color:#E8E6E3">Cache.ts</span>
+  </div>
+
+  <div style="position:absolute;right:0;top:0;bottom:0;width:360px;background:rgba(255,255,255,.08);backdrop-filter:blur(24px);border-left:1px solid rgba(255,255,255,.12);box-shadow:-32px 0 64px rgba(0,0,0,.5);box-sizing:border-box;padding:24px 16px;display:flex;flex-direction:column;gap:32px">
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div style="font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)">Task Tracker</div>
+      <div style="height:28px;display:flex;align-items:center;gap:12px"><span style="width:12px;font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(227,169,78,.6)">◐</span><span style="flex:1;font:400 13px/1 'IBM Plex Sans',sans-serif">Refactor auth middleware</span><span style="font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)">3 of 7</span></div>
+      <div style="height:28px;display:flex;align-items:center;gap:12px;padding-left:24px"><span style="width:12px;font:400 12px/1 'IBM Plex Mono',monospace;color:#E3A94E">●</span><span style="flex:1;font:400 13px/1 'IBM Plex Sans',sans-serif;color:rgba(255,255,255,.85)">Extract token verify</span></div>
+      <div style="height:28px;display:flex;align-items:center;gap:12px;padding-left:24px"><span style="width:12px;font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.18)">○</span><span style="flex:1;font:400 13px/1 'IBM Plex Sans',sans-serif;color:rgba(255,255,255,.4)">Move cache invalidation</span></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div style="font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)">Chat History</div>
+      <div style="height:28px;display:flex;align-items:center;gap:12px"><span style="width:12px;font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.3)">◌</span><span style="flex:1;font:400 13px/1 'IBM Plex Sans',sans-serif;color:rgba(255,255,255,.85)">Why is evict slow?</span><span style="font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)">14m</span></div>
+      <div style="height:28px;display:flex;align-items:center;gap:12px"><span style="width:12px;font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.3)">◌</span><span style="flex:1;font:400 13px/1 'IBM Plex Sans',sans-serif;color:rgba(255,255,255,.85)">Listener cleanup</span><span style="font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)">1h</span></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div style="font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)">Context</div>
+      <div style="height:28px;display:flex;align-items:center;gap:12px"><span style="width:12px;font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.3)">◌</span><span style="flex:1;font:400 13px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.85)">src/cache/Cache.ts</span></div>
+      <div style="height:28px;display:flex;align-items:center;gap:12px"><span style="width:12px;font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.3)">◌</span><span style="flex:1;font:400 13px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.85)">src/auth/authGuard.ts</span></div>
+      <div style="height:28px;display:flex;align-items:center;gap:12px"><span style="width:12px;font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.3)">◌</span><span style="flex:1;font:400 13px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)">ledger-api · 40 files</span></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div style="font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)">Custom Instructions</div>
+      <div style="font:400 13px/20px 'IBM Plex Sans',sans-serif;color:rgba(255,255,255,.85)">Prefer explicit disposal over finalizers. No new dependencies.</div>
+    </div>
+    <div style="margin-top:auto;display:flex;flex-direction:column;gap:4px">
+      <div style="height:32px;display:flex;align-items:center;gap:12px">
+        <span style="width:32px;height:18px;border-radius:9px;background:rgba(255,255,255,.18);position:relative;flex:none"><span style="position:absolute;left:2px;top:2px;width:14px;height:14px;border-radius:50%;background:rgba(255,255,255,.4)"></span></span>
+        <span style="flex:1;font:400 13px/1 'IBM Plex Sans',sans-serif">Go-Live</span>
+      </div>
+      <div style="font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4);padding-left:44px">Reviews on save · build · commit</div>
+    </div>
+  </div>
+
+  <div style="position:absolute;left:50%;transform:translateX(-50%);bottom:24px;width:720px;height:52px;display:flex;align-items:center;gap:12px;padding:0 16px;background:rgba(255,255,255,.08);backdrop-filter:blur(24px);border-radius:16px;border-top:1px solid rgba(255,255,255,.12);box-shadow:0 24px 48px rgba(0,0,0,.5);box-sizing:border-box">
+    <span style="font:500 12px/1 'IBM Plex Mono',monospace;padding:5px 8px;border-radius:8px;background:rgba(227,169,78,.18);color:#E3A94E">agent</span>
+    <span style="width:1px;height:18px;background:#E3A94E"></span>
+    <span style="font:400 13px/1 'IBM Plex Sans',sans-serif;color:rgba(255,255,255,.4)">describe an edit</span>
+    <span style="margin-left:auto;font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)">⌥L</span>
+  </div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:baseline;gap:10px"><span style="font:500 10.5px/1 'IBM Plex Mono',monospace;padding:4px 7px;background:rgba(255,255,255,.08);border-radius:5px">FRAME 1 · detail</span><span style="font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)">console after cmd: run · above composer · left edges align · max-height 240</span></div>
+<div style="position:relative;width:800px;height:420px;overflow:hidden;background:#0E0F11;border-radius:12px;border:1px solid rgba(255,255,255,.08)">
+  <div style="position:absolute;inset:0;padding:16px 12px;font:400 13px/22px 'IBM Plex Mono',monospace;color:rgba(255,255,255,.3)">
+    <div>34 private evict(now: number) {</div>
+    <div>35   for (const [key, entry] of this.entries) {</div>
+    <div>36     if (entry.expires > now) continue</div>
+    <div>37     this.entries.delete(key)</div>
+  </div>
+  <div style="position:absolute;left:40px;bottom:88px;width:720px;max-height:240px;overflow:hidden;background:rgba(255,255,255,.08);backdrop-filter:blur(24px);border-radius:16px;border-top:1px solid rgba(255,255,255,.12);box-shadow:0 24px 48px rgba(0,0,0,.5);box-sizing:border-box;padding:16px">
+    <div style="display:flex;align-items:center;gap:12px"><span style="font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)">cmd: test cache</span><span style="margin-left:auto;font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)">Esc</span></div>
+    <div style="background:rgba(255,255,255,.04);border-left:2px solid #E3A94E;padding:12px;margin-top:12px;font:400 13px/20px 'IBM Plex Mono',monospace;color:rgba(255,255,255,.75)">
+      <div>PASS  src/cache/Cache.test.ts  18 tests</div>
+      <div>FAIL  evict removes listeners</div>
+      <div style="color:rgba(255,255,255,.4)">  Cache.ts:38 — expected 0 listeners, got 1</div>
+    </div>
+  </div>
+  <div style="position:absolute;left:40px;bottom:24px;width:720px;height:52px;display:flex;align-items:center;gap:12px;padding:0 16px;background:rgba(255,255,255,.08);backdrop-filter:blur(24px);border-radius:16px;border-top:1px solid rgba(255,255,255,.12);box-sizing:border-box">
+    <span style="font:500 12px/1 'IBM Plex Mono',monospace;padding:5px 8px;border-radius:8px;background:rgba(227,169,78,.18);color:#E3A94E">agent</span>
+    <span style="width:1px;height:18px;background:#E3A94E"></span>
+  </div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:baseline;gap:10px"><span style="font:500 10.5px/1 'IBM Plex Mono',monospace;padding:4px 7px;background:rgba(255,255,255,.08);border-radius:5px">FRAME 2</span><span style="font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)">focus mode ⌥⇧F · rail 220, Task Tracker only · composer 44px pill</span></div>
+<div style="position:relative;width:1280px;height:800px;overflow:hidden;background:#0E0F11;border-radius:12px;border:1px solid rgba(255,255,255,.08)">
+  <div style="position:absolute;inset:0;padding:56px 0 0;font:400 13px/22px 'IBM Plex Mono',monospace">
+    <div style="display:flex;gap:24px;padding:0 12px"><span style="width:24px;text-align:right;color:rgba(255,255,255,.3)">34</span><span style="color:rgba(255,255,255,.75)">private evict(now: number) {</span></div>
+    <div style="display:flex;gap:24px;padding:0 12px"><span style="width:24px;text-align:right;color:rgba(255,255,255,.3)">35</span><span style="color:rgba(255,255,255,.75)">  for (const [key, entry] of this.entries) {</span></div>
+    <div style="display:flex;gap:24px;padding:0 12px"><span style="width:24px;text-align:right;color:rgba(255,255,255,.3)">36</span><span style="color:rgba(255,255,255,.75)">    if (entry.expires > now) continue</span></div>
+    <div style="display:flex;gap:24px;padding:0 12px;position:relative"><span style="position:absolute;left:0;top:6px;width:2px;height:10px;background:rgba(255,255,255,.3)"></span><span style="width:24px;text-align:right;color:rgba(255,255,255,.3)">37</span><span style="color:rgba(255,255,255,.75)">    this.entries.delete(key)</span></div>
+    <div style="display:flex;gap:24px;padding:0 12px;position:relative"><span style="position:absolute;left:0;top:6px;width:2px;height:10px;background:rgba(255,255,255,.3)"></span><span style="width:24px;text-align:right;color:rgba(255,255,255,.3)">38</span><span style="color:rgba(255,255,255,.75)">    this.listeners.get(key)?.forEach(fn => fn())</span></div>
+    <div style="display:flex;gap:24px;padding:0 12px"><span style="width:24px;text-align:right;color:rgba(255,255,255,.3)">39</span><span style="color:rgba(255,255,255,.75)">  }</span></div>
+    <div style="display:flex;gap:24px;padding:0 12px"><span style="width:24px;text-align:right;color:rgba(255,255,255,.3)">40</span><span style="color:rgba(255,255,255,.75)">}</span></div>
+    <div style="display:flex;gap:24px;padding:0 12px"><span style="width:24px;text-align:right;color:rgba(255,255,255,.3)">41</span><span></span></div>
+    <div style="display:flex;gap:24px;padding:0 12px"><span style="width:24px;text-align:right;color:rgba(255,255,255,.3)">42</span><span style="color:rgba(255,255,255,.75)">read&lt;T&gt;(key: string): T | undefined {</span></div>
+    <div style="display:flex;gap:24px;padding:0 12px"><span style="width:24px;text-align:right;color:rgba(255,255,255,.3)">43</span><span style="color:rgba(255,255,255,.75)">  const entry = this.entries.get(key)</span></div>
+    <div style="display:flex;gap:24px;padding:0 12px"><span style="width:24px;text-align:right;color:rgba(255,255,255,.3)">44</span><span style="color:rgba(255,255,255,.75)">  if (!entry) return undefined</span></div>
+    <div style="display:flex;gap:24px;padding:0 12px"><span style="width:24px;text-align:right;color:rgba(255,255,255,.3)">45</span><span style="color:rgba(255,255,255,.75)">  this.hits += 1</span></div>
+    <div style="display:flex;gap:24px;padding:0 12px"><span style="width:24px;text-align:right;color:rgba(255,255,255,.3)">46</span><span style="color:rgba(255,255,255,.75)">  return entry.value as T</span></div>
+    <div style="display:flex;gap:24px;padding:0 12px"><span style="width:24px;text-align:right;color:rgba(255,255,255,.3)">47</span><span style="color:rgba(255,255,255,.75)">}</span></div>
+  </div>
+  <div style="position:absolute;left:12px;top:12px;font:400 12px/1 'IBM Plex Mono',monospace"><span style="color:rgba(255,255,255,.45)">src/cache/</span><span style="color:#E8E6E3">Cache.ts</span></div>
+  <div style="position:absolute;right:0;top:0;bottom:0;width:220px;background:rgba(255,255,255,.08);backdrop-filter:blur(24px);border-left:1px solid rgba(255,255,255,.12);box-shadow:-32px 0 64px rgba(0,0,0,.5);box-sizing:border-box;padding:24px 16px;display:flex;flex-direction:column;gap:8px">
+    <div style="font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)">Task Tracker</div>
+    <div style="height:28px;display:flex;align-items:center;gap:8px"><span style="width:12px;font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(227,169,78,.6)">◐</span><span style="flex:1;font:400 13px/1 'IBM Plex Sans',sans-serif">Refactor auth</span><span style="font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)">3/7</span></div>
+    <div style="height:28px;display:flex;align-items:center;gap:8px;padding-left:20px"><span style="width:12px;font:400 12px/1 'IBM Plex Mono',monospace;color:#E3A94E">●</span><span style="flex:1;font:400 13px/1 'IBM Plex Sans',sans-serif;color:rgba(255,255,255,.85)">Extract verify</span></div>
+    <div style="height:28px;display:flex;align-items:center;gap:8px;padding-left:20px"><span style="width:12px;font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.18)">○</span><span style="flex:1;font:400 13px/1 'IBM Plex Sans',sans-serif;color:rgba(255,255,255,.4)">Move invalidation</span></div>
+  </div>
+  <div style="position:absolute;left:50%;transform:translateX(-50%);bottom:24px;width:44px;height:44px;border-radius:16px;background:rgba(255,255,255,.08);backdrop-filter:blur(24px);border-top:1px solid rgba(255,255,255,.12);box-shadow:0 24px 48px rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center">
+    <span style="width:1px;height:14px;background:rgba(227,169,78,.6)"></span>
+  </div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:baseline;gap:10px"><span style="font:500 10.5px/1 'IBM Plex Mono',monospace;padding:4px 7px;background:rgba(255,255,255,.08);border-radius:5px">FRAME 3</span><span style="font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)">go-live · one living review, rewritten each commit · aged past 5 commits = full accent</span></div>
+<div style="position:relative;width:1280px;height:800px;overflow:hidden;background:#0E0F11;border-radius:12px;border:1px solid rgba(255,255,255,.08)">
+  <div style="position:absolute;inset:0;padding:56px 0 0;font:400 13px/22px 'IBM Plex Mono',monospace">
+    <div style="display:flex;gap:24px;padding:0 12px"><span style="width:24px;text-align:right;color:rgba(255,255,255,.3)">34</span><span style="color:rgba(255,255,255,.75)">private evict(now: number) {</span></div>
+    <div style="display:flex;gap:24px;padding:0 12px"><span style="width:24px;text-align:right;color:rgba(255,255,255,.3)">35</span><span style="color:rgba(255,255,255,.75)">  for (const [key, entry] of this.entries) {</span></div>
+    <div style="display:flex;gap:24px;padding:0 12px"><span style="width:24px;text-align:right;color:rgba(255,255,255,.3)">36</span><span style="color:rgba(255,255,255,.75)">    if (entry.expires > now) continue</span></div>
+    <div style="display:flex;gap:24px;padding:0 12px;position:relative"><span style="position:absolute;left:0;top:6px;width:2px;height:10px;background:rgba(255,255,255,.3)"></span><span style="width:24px;text-align:right;color:rgba(255,255,255,.3)">37</span><span style="color:rgba(255,255,255,.75)">    this.entries.delete(key)</span></div>
+    <div style="display:flex;gap:24px;padding:0 12px"><span style="width:24px;text-align:right;color:rgba(255,255,255,.3)">38</span><span style="color:rgba(255,255,255,.75)">    this.listeners.get(key)?.forEach(fn => fn())</span></div>
+    <div style="display:flex;gap:24px;padding:0 12px"><span style="width:24px;text-align:right;color:rgba(255,255,255,.3)">39</span><span style="color:rgba(255,255,255,.75)">  }</span></div>
+    <div style="display:flex;gap:24px;padding:0 12px"><span style="width:24px;text-align:right;color:rgba(255,255,255,.3)">40</span><span style="color:rgba(255,255,255,.75)">}</span></div>
+    <div style="display:flex;gap:24px;padding:0 12px"><span style="width:24px;text-align:right;color:rgba(255,255,255,.3)">41</span><span style="color:rgba(255,255,255,.75)">const clone = [...this.ticks]</span></div>
+    <div style="display:flex;gap:24px;padding:0 12px"><span style="width:24px;text-align:right;color:rgba(255,255,255,.3)">42</span><span style="color:rgba(255,255,255,.75)">read&lt;T&gt;(key: string): T | undefined {</span></div>
+    <div style="display:flex;gap:24px;padding:0 12px"><span style="width:24px;text-align:right;color:rgba(255,255,255,.3)">43</span><span style="color:rgba(255,255,255,.75)">  const entry = this.entries.get(key)</span></div>
+    <div style="display:flex;gap:24px;padding:0 12px"><span style="width:24px;text-align:right;color:rgba(255,255,255,.3)">44</span><span style="color:rgba(255,255,255,.75)">  if (!entry) return undefined</span></div>
+  </div>
+  <div style="position:absolute;left:12px;top:12px;font:400 12px/1 'IBM Plex Mono',monospace"><span style="color:rgba(255,255,255,.45)">src/cache/</span><span style="color:#E8E6E3">Cache.ts</span></div>
+  <div style="position:absolute;right:0;top:0;bottom:0;width:360px;background:rgba(255,255,255,.08);backdrop-filter:blur(24px);border-left:1px solid rgba(255,255,255,.12);box-shadow:-32px 0 64px rgba(0,0,0,.5);box-sizing:border-box;padding:24px 16px;display:flex;flex-direction:column;gap:32px">
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div style="font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)">Task Tracker</div>
+      <div style="height:28px;display:flex;align-items:center;gap:12px"><span style="width:12px;font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(227,169,78,.6)">◐</span><span style="flex:1;font:400 13px/1 'IBM Plex Sans',sans-serif">Refactor auth middleware</span><span style="font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)">3 of 7</span></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div style="font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)">Context</div>
+      <div style="height:28px;display:flex;align-items:center;gap:12px"><span style="width:12px;font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.3)">◌</span><span style="flex:1;font:400 13px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.85)">src/cache/Cache.ts</span></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:4px">
+      <div style="height:32px;display:flex;align-items:center;gap:12px">
+        <span style="width:32px;height:18px;border-radius:9px;background:rgba(227,169,78,.4);position:relative;flex:none"><span style="position:absolute;right:2px;top:2px;width:14px;height:14px;border-radius:50%;background:#E3A94E"></span></span>
+        <span style="flex:1;font:400 13px/1 'IBM Plex Sans',sans-serif">Go-Live</span>
+      </div>
+      <div style="font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4);padding-left:44px">Reviews on save · build · commit</div>
+    </div>
+    <div style="margin-top:auto;display:flex;flex-direction:column;gap:8px">
+      <div style="font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)">Review · a3f21c</div>
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <div style="display:flex;flex-direction:column;gap:2px;padding:4px 0">
+          <div style="display:flex;align-items:center;gap:12px"><span style="width:12px;font:400 12px/1 'IBM Plex Mono',monospace;color:#E3A94E">●</span><span style="flex:1;font:400 13px/1 'IBM Plex Sans',sans-serif">Blob retained in loop</span></div>
+          <div style="font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4);padding-left:24px">Cache.ts 41 · raised a3f21c · 3 commits</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:2px;padding:4px 0">
+          <div style="display:flex;align-items:center;gap:12px"><span style="width:12px;font:400 12px/1 'IBM Plex Mono',monospace;color:#E3A94E">●</span><span style="flex:1;font:400 13px/1 'IBM Plex Sans',sans-serif">Listener not removed</span></div>
+          <div style="font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4);padding-left:24px">Panel.tsx 12 · raised a3f21c · 3 commits</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:2px;padding:4px 0">
+          <div style="display:flex;align-items:center;gap:12px"><span style="width:12px;font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(227,169,78,.6)">●</span><span style="flex:1;font:400 13px/1 'IBM Plex Sans',sans-serif">Full array cloned per tick</span></div>
+          <div style="font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4);padding-left:24px">Ticker.ts 88 · amended 1f9e02</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:2px;padding:4px 0">
+          <div style="display:flex;align-items:center;gap:12px"><span style="width:12px;font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(227,169,78,.6)">●</span><span style="flex:1;font:400 13px/1 'IBM Plex Sans',sans-serif">Sync read on hot path</span></div>
+          <div style="font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4);padding-left:24px">Loader.ts 24 · new</div>
+        </div>
+        <div style="height:28px;display:flex;align-items:center;gap:12px"><span style="width:12px;font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.18)">○</span><span style="flex:1;font:400 13px/1 'IBM Plex Sans',sans-serif;color:rgba(255,255,255,.4)">6 closed</span></div>
+      </div>
+      <div style="height:32px;display:flex;align-items:center;justify-content:space-between;padding:0 12px;border-radius:8px;background:rgba(227,169,78,.18);box-sizing:border-box">
+        <span style="font:500 13px/1 'IBM Plex Sans',sans-serif;color:#E3A94E">Execute review</span>
+        <span style="font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(227,169,78,.6)">⌥R</span>
+      </div>
+    </div>
+  </div>
+  <div style="position:absolute;left:50%;transform:translateX(-50%);bottom:24px;width:720px;height:52px;display:flex;align-items:center;gap:12px;padding:0 16px;background:rgba(255,255,255,.08);backdrop-filter:blur(24px);border-radius:16px;border-top:1px solid rgba(255,255,255,.12);box-shadow:0 24px 48px rgba(0,0,0,.5);box-sizing:border-box">
+    <span style="font:500 12px/1 'IBM Plex Mono',monospace;padding:5px 8px;border-radius:8px;background:rgba(227,169,78,.18);color:#E3A94E">agent</span>
+    <span style="width:1px;height:18px;background:#E3A94E"></span>
+  </div>
+</div>
+<div style="font:400 12px/1.6 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4);max-width:1280px">escalation: findings 1 and 2 are past 5 commits — glyph at 100% accent. 3 and 4 sit at 60%. no red, no badges, no severity colours.</div>
+</div>
+
+</div>
+</section>
+
+<section id="C" style="padding:48px">
+<div style="display:flex;align-items:baseline;gap:12px;margin-bottom:8px">
+<a href="#C" style="font:500 10px/1 'IBM Plex Mono',monospace;padding:5px 8px;background:rgba(227,169,78,.18);color:#E3A94E;border-radius:4px">SHEET C</a>
+<h1 style="margin:0;font:600 16px/1 'IBM Plex Sans',sans-serif">Morph</h1>
+<span style="font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)">5 stills · the FIELD travels · 240ms cubic-bezier(.32,.72,0,1) · symmetric</span>
+</div>
+<p style="margin:0 0 40px;font:400 12px/1.6 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4);max-width:760px">never duplicated, never crossfaded. content asymmetry between stills 2 and 4 is deliberate: on the way up the chip leaves before results arrive; on the way down results leave before the chip returns.</p>
+
+<div style="display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start;margin-bottom:48px">
+
+<div style="display:flex;flex-direction:column;gap:8px">
+<div style="position:relative;width:480px;height:300px;background:#0E0F11;border-radius:12px;border:1px solid rgba(255,255,255,.08);overflow:hidden">
+  <div style="position:absolute;left:8px;top:8px;font:400 12px/1 'IBM Plex Mono',monospace"><span style="color:rgba(255,255,255,.45)">src/cache/</span><span style="color:#E8E6E3">Cache.ts</span></div>
+  <div style="position:absolute;left:50%;transform:translateX(-50%);bottom:18px;width:360px;height:39px;display:flex;align-items:center;gap:8px;padding:0 12px;background:rgba(255,255,255,.08);backdrop-filter:blur(24px);border-radius:12px;border-top:1px solid rgba(255,255,255,.12);box-sizing:border-box">
+    <span style="font:500 10px/1 'IBM Plex Mono',monospace;padding:4px 6px;border-radius:6px;background:rgba(227,169,78,.18);color:#E3A94E">agent</span>
+    <span style="width:1px;height:14px;background:#E3A94E"></span>
+  </div>
+</div>
+<div style="font:400 12px/1.5 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)">1 · rest — 720, bottom-centre, chip visible</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:8px">
+<div style="position:relative;width:480px;height:300px;background:#0E0F11;border-radius:12px;border:1px solid rgba(255,255,255,.08);overflow:hidden">
+  <div style="position:absolute;left:8px;top:8px;font:400 12px/1 'IBM Plex Mono',monospace"><span style="color:rgba(255,255,255,.45)">src/cache/</span><span style="color:#E8E6E3">Cache.ts</span></div>
+  <div style="position:absolute;left:50%;transform:translateX(-50%);top:140px;width:340px;height:39px;display:flex;align-items:center;gap:8px;padding:0 12px;background:rgba(255,255,255,.08);backdrop-filter:blur(32px);border-radius:12px;border-top:1px solid rgba(255,255,255,.26);box-sizing:border-box">
+    <span style="width:1px;height:14px;background:#E3A94E"></span>
+  </div>
+</div>
+<div style="font:400 12px/1.5 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)">2 · mid-up — narrowing toward 640, chip gone, no results</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:8px">
+<div style="position:relative;width:480px;height:300px;background:#0E0F11;border-radius:12px;border:1px solid rgba(255,255,255,.08);overflow:hidden">
+  <div style="position:absolute;left:8px;top:8px;font:400 12px/1 'IBM Plex Mono',monospace"><span style="color:rgba(255,255,255,.45)">src/cache/</span><span style="color:#E8E6E3">Cache.ts</span></div>
+  <div style="position:absolute;left:50%;transform:translateX(-50%);top:54px;width:320px;background:rgba(255,255,255,.08);backdrop-filter:blur(40px);border-radius:12px;border-top:1px solid rgba(255,255,255,.4);box-shadow:0 24px 48px rgba(0,0,0,.6);box-sizing:border-box;overflow:hidden">
+    <div style="height:39px;display:flex;align-items:center;gap:8px;padding:0 12px"><span style="font:400 12px/1 'IBM Plex Mono',monospace">auth</span><span style="width:1px;height:14px;background:#E3A94E"></span></div>
+    <div style="padding:4px 0 8px">
+      <div style="height:26px;display:flex;align-items:center;gap:10px;padding:0 12px;background:rgba(227,169,78,.18)"><span style="width:10px;font:400 11px/1 'IBM Plex Mono',monospace;color:#E3A94E">●</span><span style="flex:1;font:400 12px/1 'IBM Plex Mono',monospace">authGuard.ts</span><span style="font:400 11px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)">src/auth</span></div>
+      <div style="height:26px;display:flex;align-items:center;gap:10px;padding:0 12px"><span style="width:10px;font:400 11px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.3)">◌</span><span style="flex:1;font:400 12px/1 'IBM Plex Mono',monospace">authMiddleware.ts</span><span style="font:400 11px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)">src/auth</span></div>
+      <div style="height:26px;display:flex;align-items:center;gap:10px;padding:0 12px"><span style="width:10px;font:400 11px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.3)">◌</span><span style="flex:1;font:400 12px/1 'IBM Plex Mono',monospace">auth.test.ts</span><span style="font:400 11px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)">test</span></div>
+    </div>
+  </div>
+</div>
+<div style="font:400 12px/1.5 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)">3 · spotlight — 640, 18% from top, blur 40, 40% hairline, results below</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:8px">
+<div style="position:relative;width:480px;height:300px;background:#0E0F11;border-radius:12px;border:1px solid rgba(255,255,255,.08);overflow:hidden">
+  <div style="position:absolute;left:8px;top:8px;font:400 12px/1 'IBM Plex Mono',monospace"><span style="color:rgba(255,255,255,.45)">src/cache/</span><span style="color:#E8E6E3">Cache.ts</span></div>
+  <div style="position:absolute;left:50%;transform:translateX(-50%);top:140px;width:340px;height:39px;display:flex;align-items:center;gap:8px;padding:0 12px;background:rgba(255,255,255,.08);backdrop-filter:blur(32px);border-radius:12px;border-top:1px solid rgba(255,255,255,.26);box-sizing:border-box">
+    <span style="width:1px;height:14px;background:#E3A94E"></span>
+  </div>
+</div>
+<div style="font:400 12px/1.5 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)">4 · mid-down — results gone, chip not yet back</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:8px">
+<div style="position:relative;width:480px;height:300px;background:#0E0F11;border-radius:12px;border:1px solid rgba(255,255,255,.08);overflow:hidden">
+  <div style="position:absolute;left:8px;top:8px;font:400 12px/1 'IBM Plex Mono',monospace"><span style="color:rgba(255,255,255,.45)">src/cache/</span><span style="color:#E8E6E3">Cache.ts</span></div>
+  <div style="position:absolute;left:50%;transform:translateX(-50%);bottom:18px;width:360px;height:39px;display:flex;align-items:center;gap:8px;padding:0 12px;background:rgba(255,255,255,.08);backdrop-filter:blur(24px);border-radius:12px;border-top:1px solid rgba(255,255,255,.12);box-sizing:border-box">
+    <span style="font:500 10px/1 'IBM Plex Mono',monospace;padding:4px 6px;border-radius:6px;background:rgba(227,169,78,.18);color:#E3A94E">agent</span>
+    <span style="width:1px;height:14px;background:#E3A94E"></span>
+  </div>
+</div>
+<div style="font:400 12px/1.5 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)">5 · rest — identical to 1</div>
+</div>
+
+</div>
+
+<div style="display:flex;align-items:baseline;gap:10px;margin-bottom:20px"><span style="font:500 10.5px/1 'IBM Plex Mono',monospace;padding:4px 7px;background:rgba(255,255,255,.08);border-radius:5px">SPOTLIGHT GRAMMAR</span><span style="font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)">files unprefixed · everything else x:y</span></div>
+
+<div style="display:flex;flex-wrap:wrap;gap:32px;align-items:flex-start">
+
+<div style="display:flex;flex-direction:column;gap:8px">
+<div style="width:640px;background:rgba(255,255,255,.08);backdrop-filter:blur(40px);border-radius:16px;border-top:1px solid rgba(255,255,255,.4);box-shadow:0 32px 64px rgba(0,0,0,.6);box-sizing:border-box;overflow:hidden">
+  <div style="height:52px;display:flex;align-items:center;gap:12px;padding:0 16px"><span style="width:1px;height:18px;background:#E3A94E"></span></div>
+  <div style="padding:0 16px 16px;display:flex;flex-direction:column;gap:4px">
+    <div style="font:400 13px/1.4 'IBM Plex Sans',sans-serif;color:rgba(255,255,255,.4)">type to find a file</div>
+    <div style="font:400 13px/1.4 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)">fs:  project tree      cmd:  commands</div>
+  </div>
+</div>
+<div style="font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)">empty state · 40% · two lines only</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:8px">
+<div style="width:640px;background:rgba(255,255,255,.08);backdrop-filter:blur(40px);border-radius:16px;border-top:1px solid rgba(255,255,255,.4);box-shadow:0 32px 64px rgba(0,0,0,.6);box-sizing:border-box;overflow:hidden">
+  <div style="height:52px;display:flex;align-items:center;gap:12px;padding:0 16px"><span style="font:400 13px/1 'IBM Plex Mono',monospace">cmd:</span><span style="font:400 13px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)">test</span><span style="width:1px;height:18px;background:#E3A94E"></span></div>
+  <div style="padding:0 8px 12px">
+    <div style="height:28px;display:flex;align-items:center;gap:12px;padding:0 8px;border-radius:8px;background:rgba(227,169,78,.18)"><span style="width:12px;font:400 12px/1 'IBM Plex Mono',monospace;color:#E3A94E">●</span><span style="flex:1;font:400 13px/1 'IBM Plex Sans',sans-serif">test cache</span><span style="font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)">vitest run src/cache</span></div>
+    <div style="height:28px;display:flex;align-items:center;gap:12px;padding:0 8px"><span style="width:12px;font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.3)">◌</span><span style="flex:1;font:400 13px/1 'IBM Plex Sans',sans-serif">test all</span><span style="font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)">vitest run</span></div>
+    <div style="height:28px;display:flex;align-items:center;gap:12px;padding:0 8px"><span style="width:12px;font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(227,169,78,.6)">◐</span><span style="flex:1;font:400 13px/1 'IBM Plex Sans',sans-serif">typecheck</span><span style="font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)">running</span></div>
+    <div style="height:8px"></div>
+    <div style="height:28px;display:flex;align-items:center;gap:12px;padding:0 8px"><span style="width:12px"></span><span style="flex:1;font:400 13px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.3)">sym:  ext:  agent:</span><span style="font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.3)">not yet available</span></div>
+  </div>
+</div>
+<div style="font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)">cmd: · ⌃⇧P prefilled · reserved prefixes dimmed</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:8px">
+<div style="position:relative;width:1000px;height:640px;background:#0E0F11;border-radius:12px;border:1px solid rgba(255,255,255,.08);overflow:hidden">
+  <div style="position:absolute;inset:0;padding:44px 0 0;font:400 13px/22px 'IBM Plex Mono',monospace;color:rgba(255,255,255,.3)">
+    <div style="padding:0 12px">34 private evict(now: number) {</div>
+    <div style="padding:0 12px">35   for (const [key, entry] of this.entries) {</div>
+    <div style="padding:0 12px">36     if (entry.expires > now) continue</div>
+  </div>
+  <div style="position:absolute;left:8px;top:8px;font:400 12px/1 'IBM Plex Mono',monospace"><span style="color:rgba(255,255,255,.45)">src/cache/</span><span style="color:#E8E6E3">Cache.ts</span></div>
+  <div style="position:absolute;left:50%;transform:translateX(-50%);top:115px;width:640px;max-height:384px;background:rgba(255,255,255,.08);backdrop-filter:blur(40px);border-radius:16px;border-top:1px solid rgba(255,255,255,.4);box-shadow:0 32px 64px rgba(0,0,0,.6);box-sizing:border-box;overflow:hidden">
+    <div style="height:52px;display:flex;align-items:center;gap:12px;padding:0 16px"><span style="font:400 13px/1 'IBM Plex Mono',monospace">fs:</span><span style="width:1px;height:18px;background:#E3A94E"></span></div>
+    <div style="padding:0 8px 12px">
+      <div style="height:28px;display:flex;align-items:center;gap:8px;padding:0 8px"><span style="width:12px;font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.3)">◌</span><span style="font:400 13px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.85)">src</span></div>
+      <div style="height:28px;display:flex;align-items:center;gap:8px;padding:0 8px 0 24px;border-left:1px solid rgba(255,255,255,.08);margin-left:16px"><span style="width:12px;font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.3)">◌</span><span style="font:400 13px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.85)">auth</span><span style="font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)">3 files</span></div>
+      <div style="height:28px;display:flex;align-items:center;gap:8px;padding:0 8px 0 24px;border-left:1px solid rgba(255,255,255,.08);margin-left:16px"><span style="width:12px;font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.3)">◌</span><span style="font:400 13px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.85)">cache</span></div>
+      <div style="height:28px;display:flex;align-items:center;gap:8px;padding:0 8px 0 40px;border-left:1px solid rgba(255,255,255,.08);margin-left:32px;background:rgba(227,169,78,.18)"><span style="width:12px;font:400 12px/1 'IBM Plex Mono',monospace;color:#E3A94E">●</span><span style="flex:1;font:400 13px/1 'IBM Plex Mono',monospace">Cache.ts</span><span style="font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)">open</span></div>
+      <div style="height:28px;display:flex;align-items:center;gap:8px;padding:0 8px 0 40px;border-left:1px solid rgba(255,255,255,.08);margin-left:32px"><span style="width:12px;font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.3)">◌</span><span style="font:400 13px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.85)">Cache.test.ts</span></div>
+      <div style="height:28px;display:flex;align-items:center;gap:8px;padding:0 8px 0 40px;border-left:1px solid rgba(255,255,255,.08);margin-left:32px"><span style="width:12px;font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.3)">◌</span><span style="font:400 13px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.85)">Entry.ts</span></div>
+      <div style="height:28px;display:flex;align-items:center;gap:8px;padding:0 8px 0 24px;border-left:1px solid rgba(255,255,255,.08);margin-left:16px"><span style="width:12px;font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.3)">◌</span><span style="font:400 13px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.85)">ledger</span><span style="font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)">11 files</span></div>
+      <div style="height:28px;display:flex;align-items:center;gap:8px;padding:0 8px 0 24px;border-left:1px solid rgba(255,255,255,.08);margin-left:16px"><span style="width:12px;font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.3)">◌</span><span style="font:400 13px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.85)">runtime</span><span style="font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)">7 files</span></div>
+      <div style="height:28px;display:flex;align-items:center;gap:8px;padding:0 8px"><span style="width:12px;font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.3)">◌</span><span style="font:400 13px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.85)">test</span><span style="font:400 12px/1 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)">9 files</span></div>
+    </div>
+  </div>
+</div>
+<div style="font:400 12px/1.5 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4);max-width:1000px">fs: · ⌃⇧E prefilled · panel grows DOWNWARD to 60vh, input stays anchored · rows 28, indent 16, guides 8% · path to current file pre-expanded, active row highlighted</div>
+</div>
+
+</div>
+
+<div style="margin-top:48px;display:flex;flex-direction:column;gap:12px;max-width:1000px">
+<div style="font:500 10.5px/1 'IBM Plex Mono',monospace;padding:4px 7px;background:rgba(255,255,255,.08);border-radius:5px;align-self:flex-start">KEYS</div>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px 32px;font:400 12px/1.6 'IBM Plex Mono',monospace;color:rgba(255,255,255,.4)">
+<div><span style="color:#E8E6E3">⌃P</span> spotlight</div>
+<div><span style="color:#E8E6E3">⌃⇧P</span> cmd: prefilled</div>
+<div><span style="color:#E8E6E3">⌃⇧E</span> fs: prefilled</div>
+<div><span style="color:#E8E6E3">⌃Tab</span> previous file</div>
+<div><span style="color:#E8E6E3">⌘S</span> save</div>
+<div><span style="color:#E8E6E3">⌥L</span> composer</div>
+<div><span style="color:#E8E6E3">⌥R</span> execute review</div>
+<div><span style="color:#E8E6E3">⌥↵ / ⌥⌫</span> adopt / dismiss</div>
+<div><span style="color:#E8E6E3">⌥1–4</span> recent files</div>
+<div><span style="color:#E8E6E3">⌥⇧F</span> focus mode</div>
+<div><span style="color:#E8E6E3">⌥ held</span> hint layer</div>
+<div><span style="color:#E8E6E3">Esc</span> dismisses topmost layer in z order</div>
+</div>
+</div>
+</section>
+
+</x-dc>
+</body>
+</html>

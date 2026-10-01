@@ -39,11 +39,19 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 /db/
 
 # Prisma generated client
-/src/generated/
+apps/api/src/generated/
 
 # Playwright
-/test-results/
-/playwright-report/
+test-results/
+playwright-report/
+
+# e2e browser profile (live session — never commit)
+apps/e2e/browser-profile/
+apps/e2e/recorded/
 
 /notes
 /graphify-out
+# Nuxt
+.nuxt
+.output
+.nitro

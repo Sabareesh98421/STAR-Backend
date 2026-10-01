@@ -1,0 +1,13 @@
+#!/bin/sh
+# Refuses any commit authored from a gobuzl.com address. This is a personal
+# repo - a work identity leaking into it is what this exists to stop.
+email="${GIT_AUTHOR_EMAIL:-$(git config user.email)}"
+
+case "$email" in
+*@gobuzl.com)
+    echo "commit blocked: author email is $email" >&2
+    echo "this repo must not carry a gobuzl.com identity." >&2
+    echo "fix: git config user.email <your-personal-email>" >&2
+    exit 1
+    ;;
+esac

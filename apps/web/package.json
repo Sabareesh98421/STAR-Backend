@@ -1,0 +1,24 @@
+{
+  "name": "@star/web",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "nuxt dev",
+    "build": "nuxt build",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare",
+    "lint": "nuxt typecheck",
+    "test": "bunx --bun playwright test"
+  },
+  "dependencies": {
+    "@nuxt/ui": "^4.11.0",
+    "nuxt": "^4.2.1",
+    "tailwindcss": "^4.3.3",
+    "vue": "^3.5.22"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "typescript": "^5.9.3",
+    "vue-tsc": "^3.1.1"
+  }
+}
