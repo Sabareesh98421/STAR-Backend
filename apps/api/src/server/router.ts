@@ -1,6 +1,7 @@
 // server/router.ts
 import { logger } from '@/infrastructure/logger';
 import { authRoutes } from '@/modules/auth/routes';
+import { ensembleRoutes } from '@/modules/ensemble';
 import { AppError, AppErrorCode, ElysiaErrorCode, ValidationError } from '@/shared/errors';
 import response from '@/shared/http/response';
 import { failure } from '@/shared/http/responseHelper';
@@ -68,6 +69,7 @@ const masterRouter = new Elysia(routerConfig).derive(()=>({starttime:Date.now()}
 })
 .use(socketRouter)
 .use(authRoutes)
+.use(ensembleRoutes)
 .get('/',()=>{
     console.log('welcome,server is running');
 })
