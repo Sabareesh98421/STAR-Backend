@@ -1,6 +1,6 @@
 import { onBeforeUnmount, reactive, ref, toRefs } from 'vue';
 import { applyEvent, emptyRunState, type LinkState } from '../domain/run';
-import { localRunTransport, type RunTransport } from '../transport/run.transport';
+import { makeHttpRunTransport, type RunTransport } from '../transport/run.transport';
 
 /**
  * Holds one run.
@@ -10,7 +10,11 @@ import { localRunTransport, type RunTransport } from '../transport/run.transport
  * bugs that shallowRef plus triggerRef invites. The place that genuinely needs
  * shallow state is streaming response text, which is kept out of this store.
  */
-export function useRun(transport: RunTransport = localRunTransport) {
+export function useRun(transport?: RunTransport) {
+    // Built here rather than as a module-level default: the API base comes from
+    // runtime config, which only exists inside a Nuxt setup context. A spec
+    // passes its own transport and never touches this.
+    const wire = transport ?? makeHttpRunTransport(useRuntimeConfig().public.apiBase);
     const state = reactive(emptyRunState());
     /** Our connection, not the run. A drop moves this and nothing else. */
     const link = ref<LinkState>('live');
@@ -31,7 +35,7 @@ export function useRun(transport: RunTransport = localRunTransport) {
         const { signal } = controller;
 
         try {
-            for await (const event of transport.start(prompt, signal)) {
+            for await (const event of wire.start(prompt, signal)) {
                 if (signal.aborted) return;
                 applyEvent(state, event);
             }
