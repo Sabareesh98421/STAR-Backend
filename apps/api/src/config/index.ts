@@ -7,3 +7,4 @@ export { otpConfig } from './otp.config';
 export { signupConfig } from './signup.config';
 export { serverConfig } from './server.config';
 export { loggerConfig } from './logger.config';
+export { ensembleConfig } from './ensemble.config';
