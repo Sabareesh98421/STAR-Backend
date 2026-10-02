@@ -1,0 +1,13 @@
+{
+  "name": "@star/browser-ensemble",
+  "private": true,
+  "type": "module",
+  "description": "Peer-review ensemble over browser-based LLMs, driven through CDP.",
+  "exports": {
+    ".": "./ensemble.mjs",
+    "./broadcast": "./broadcast.mjs"
+  },
+  "dependencies": {
+    "playwright": "^1.63.0"
+  }
+}
