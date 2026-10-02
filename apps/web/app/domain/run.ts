@@ -65,9 +65,21 @@ export type RunEvent =
     | { seq: number; type: 'run.started'; agents: readonly Agent[]; prompt: string }
     | { seq: number; type: 'agent.phase'; agentId: string; phase: AgentPhase }
     | { seq: number; type: 'agent.token'; agentId: string; text: string }
+    | {
+          seq: number;
+          type: 'agent.response';
+          agentId: string;
+          /** Which round produced it: draft, review or revise. */
+          round: string;
+          iteration: number;
+          text: string;
+          ok: boolean;
+          error: string | null;
+      }
     | { seq: number; type: 'review.added'; review: Review }
     | { seq: number; type: 'run.status'; status: RunStatus }
-    | { seq: number; type: 'leader.note'; text: string };
+    | { seq: number; type: 'leader.note'; text: string }
+    | { seq: number; type: 'run.file'; name: string; text: string };
 
 export const PHASE_MARKER = {
     waiting: 'closed',
@@ -99,9 +111,10 @@ export function phaseLabel(runtime: AgentRuntime): string {
  * One run, normalised. Flat maps and a flat list, not a nested tree: an event
  * touches one entry rather than walking a graph.
  *
- * Response text is deliberately absent. Tokens are the one thing that must not
- * enter reactive state, so they are buffered outside it and published per
- * response. Everything here is small and bounded by the agent count.
+ * TOKENS are deliberately absent — they are the one thing that must not enter
+ * reactive state, so they are buffered outside it and published per response.
+ * A settled answer is a different thing: one per agent per round, bounded by
+ * the agent count like everything else here, so `responses` holds those.
  */
 export interface RunState {
     status: RunStatus;
@@ -109,12 +122,30 @@ export interface RunState {
     runtime: Record<string, AgentRuntime>;
     reviews: Review[];
     leaderNote: string | null;
+    /**
+     * The latest settled answer per agent. Bounded by the agent count like
+     * everything else here, which is why it is allowed in where tokens are
+     * not: the exclusion above is about per-token churn, and one whole answer
+     * arriving once per round is not that.
+     */
+    responses: Record<string, string>;
+    /** The finished transcript, once the run produced one. */
+    file: { name: string; text: string } | null;
     /** Last applied seq, so a reconnect resumes with ?since=<cursor>. */
     cursor: number;
 }
 
 export function emptyRunState(): RunState {
-    return { status: 'idle', agents: {}, runtime: {}, reviews: [], leaderNote: null, cursor: 0 };
+    return {
+        status: 'idle',
+        agents: {},
+        runtime: {},
+        reviews: [],
+        leaderNote: null,
+        responses: {},
+        file: null,
+        cursor: 0,
+    };
 }
 
 /** Pure apart from mutating the state it is handed, so it can be tested alone. */
@@ -153,6 +184,17 @@ export function applyEvent(state: RunState, event: RunEvent): void {
 
         case 'leader.note':
             state.leaderNote = event.text;
+            break;
+
+        case 'agent.response':
+            // A failed model must not overwrite the answer it gave in an
+            // earlier round with an empty string — that would read as a model
+            // which answered nothing rather than one that dropped out.
+            if (event.ok && event.text) state.responses[event.agentId] = event.text;
+            break;
+
+        case 'run.file':
+            state.file = { name: event.name, text: event.text };
             break;
 
         case 'agent.token':
