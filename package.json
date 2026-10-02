@@ -2,12 +2,19 @@
   "name": "ensemblem",
   "private": true,
   "type": "module",
-  "workspaces": ["apps/*", "packages/*"],
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
-    "dev": "bun run --filter '*' dev",
-    "dev:api": "bun run --filter '@star/api' dev",
-    "dev:web": "bun run --filter '@star/web' dev",
+    "dev": "concurrently -n api,web,cdp -c blue,green,magenta --kill-others-on-fail 'bun run dev:api' 'bun run dev:web' 'bun run dev:cdp'",
+    "dev:api": "cd apps/api && bun run dev",
+    "dev:web": "cd apps/web && bun run dev",
+    "dev:cdp": "cd apps/e2e && bun run dev",
     "test": "bun run --filter '*' test",
     "lint": "bun run --filter '*' lint"
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.5"
   }
 }
