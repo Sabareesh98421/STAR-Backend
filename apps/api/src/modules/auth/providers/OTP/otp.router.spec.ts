@@ -3,14 +3,14 @@ import { connectRedis, disconnectRedis, getRedis } from "@/infrastructure/redis"
 import { connectDatabase, disconnectDatabase, getDb, userRepository } from "@/infrastructure/database";
 import { getMailer } from "@/infrastructure/mailer";
 import { otpKey, cooldownKey } from "./otp.store";
-import { savePendingSignup, hasPendingSignup, pendingSignupKey } from "../../service/email.signup.store";
+import { savePendingSignup, hasPendingSignup, pendingSignupKey } from "@/modules/auth/service";
 import otpRouter from "./otp.router";
-import { OtpPurpose } from "./otp.schema";
+import { OtpPurpose } from "@/modules/auth/shared";
 
 type SendMailStub = { sendMail: (opts: { text?: string }) => Promise<unknown> };
 
 const email = "otp-router-test@example.com";
-const purpose = "router-test";
+const purpose = OtpPurpose.VerifyEmail;
 
 function postJson(path: string, body: unknown) {
     return otpRouter.handle(
@@ -46,12 +46,14 @@ test.describe("otp.router", () => {
     });
 
     test.afterAll(async () => {
-        await getRedis().del(otpKey(purpose, email), cooldownKey(purpose, email));
+        await getRedis().del(otpKey(purpose, email), cooldownKey(purpose, email), pendingSignupKey(email));
+        await getDb().user.deleteMany({ where: { email } });
         await disconnectRedis();
         await disconnectDatabase();
     });
 
     test("a real request -> verify cycle succeeds end to end over HTTP", async () => {
+        await savePendingSignup(email, { passwordHash: "hash", firstName: "Router", secondName: null });
         const mail = captureNextOtp();
         try {
             const requestRes = await postJson("/otp/request", { email, purpose });
@@ -68,6 +70,7 @@ test.describe("otp.router", () => {
 
     test("verify rejects the wrong code with 400", async () => {
         await getRedis().del(cooldownKey(purpose, email));
+        await savePendingSignup(email, { passwordHash: "hash", firstName: "Router", secondName: null });
         await postJson("/otp/request", { email, purpose });
         const res = await postJson("/otp/verify", { email, purpose, otp: "000000" });
         expect(res.status).toBe(400);
@@ -75,6 +78,7 @@ test.describe("otp.router", () => {
 
     test("a failed send rolls back the saved code, not just the cooldown lock", async () => {
         await getRedis().del(cooldownKey(purpose, email), otpKey(purpose, email));
+        await savePendingSignup(email, { passwordHash: "hash", firstName: "Router", secondName: null });
         const transporter = getMailer() as unknown as SendMailStub;
         const originalSendMail = transporter.sendMail.bind(transporter);
         transporter.sendMail = async () => {

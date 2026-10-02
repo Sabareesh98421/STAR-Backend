@@ -1,8 +1,7 @@
 // client.ts
 import Redis from "ioredis";
 import { logger } from "@/infrastructure/logger";
-import { AppError } from "@/shared/errors";
-import appErrorCodes from "@/shared/errors/app.error.codes";
+import { ServiceUnavailableError } from "@/shared/errors";
 import { TryCatch, type Resolver } from "@/shared/utils/try-catch";
 import { redisConfig } from "@/config";
 
@@ -10,11 +9,7 @@ let redis: Redis | null = null;
 
 const resolveConnectionError: Resolver<Redis> = (error) => {
     logger.error(error);
-    throw new AppError(
-        "Failed to connect to Redis",
-        appErrorCodes.redisStartError.toString(),
-        500
-    );
+    throw new ServiceUnavailableError("Failed to connect to Redis");
 };
 
 const resolveConnectFailure = (client: Redis): Resolver<void> => (error) => {
@@ -40,11 +35,7 @@ export async function connectRedis(): Promise<Redis> {
 
 export function getRedis(): Redis {
     if (!redis) {
-        throw new AppError(
-            "Redis is not yet started, connect it first",
-            appErrorCodes.redisStartError.toString(),
-            500
-        );
+        throw new ServiceUnavailableError("Redis is not connected");
     }
     return redis;
 }

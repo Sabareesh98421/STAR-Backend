@@ -1,12 +1,7 @@
 // email.signup.store.ts
 import { getRedis } from "@/infrastructure/redis";
 import { signupConfig } from "@/config";
-
-export interface PendingSignup {
-    passwordHash: string;
-    firstName: string;
-    secondName: string | null;
-}
+import type { PendingSignup } from "@/modules/auth/shared";
 
 export function pendingSignupKey(email: string): string {
     return `signup:pending:${email}`;

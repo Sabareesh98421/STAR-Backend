@@ -55,3 +55,7 @@ apps/e2e/runs/
 .nuxt
 .output
 .nitro
+
+# local-only scripts. Rebased from main's /src/scripts/ onto this branch's
+# monorepo prefix — the bare path no longer exists here.
+/apps/api/src/scripts/
