@@ -1,44 +1,41 @@
 #!/bin/sh
-# Reverse-merge main into the branch you're on, when main has moved.
+# Warn when main has moved ahead of the branch you are on.
 #
-# Local-only: no token, no CI, no network beyond the fetch. Runs from
-# post-checkout, so each branch gets current the moment you start working on
-# it - which is the only moment it matters.
+# Fast-forwards the local main ref so it is never stale, but never touches
+# your branch - the reverse merge is yours to run, when you are ready and
+# looking at it. Wired to post-checkout and post-commit.
+#
+# Local-only: no token, no CI.
 set -u
 
 branch=$(git symbolic-ref --short -q HEAD) || exit 0   # detached HEAD
 [ "$branch" = "main" ] && exit 0
 
-# Bring local main current without leaving this branch. A ref-to-ref fetch is
-# "checkout main, pull, checkout back" minus the switching - which matters,
-# because switching needs a clean tree and this one usually isn't. Git refuses
-# the write if it is not a fast-forward, so a diverged main is never clobbered.
-if ! git fetch --quiet origin main:main 2>/dev/null; then
-    git fetch --quiet origin main || exit 0
-    echo "note: local main has diverged from origin/main - left it alone."
-    echo "  merging from origin/main instead."
+# Only branches that have been pushed. A purely local scratch branch is not
+# asking to be kept current.
+git rev-parse --verify -q "@{upstream}" >/dev/null 2>&1 || exit 0
+
+# Hit the network at most once every 5 minutes, so a burst of commits does not
+# pay for a fetch each time.
+# ponytail: fixed window, make it configurable if main moves faster than this.
+if ! find "$(git rev-parse --git-path FETCH_HEAD)" -newermt '-5 minutes' >/dev/null 2>&1; then
+    git fetch --quiet origin main 2>/dev/null || true
+fi
+
+# Fast-forward local main to whatever we know of origin/main. A pure ref write
+# - no network, no checkout, so it works with a dirty tree. This is "switch to
+# main, pull, come back" minus the switching. Skipped when main has diverged,
+# which is reported below rather than clobbered.
+diverged=""
+if git merge-base --is-ancestor main origin/main 2>/dev/null; then
+    git update-ref refs/heads/main origin/main
+else
+    diverged="  local main has diverged from origin/main - left alone.
+"
 fi
 
 git merge-base --is-ancestor origin/main HEAD && exit 0   # already current
 
-# Only branches that have been pushed. A purely local scratch branch is not
-# asking to be kept current, and this costs no network call.
-git rev-parse --verify -q "@{upstream}" >/dev/null 2>&1 || exit 0
-
-behind=$(git rev-list --count HEAD..origin/main)
-
-# A dirty tree is the user's work in progress. Say something, touch nothing.
-if [ -n "$(git status --porcelain)" ]; then
-    echo "main is $behind commits ahead of $branch, and your tree is dirty."
-    echo "  commit or stash, then: git merge origin/main"
-    exit 0
-fi
-
-echo "merging main into $branch ($behind commits behind)..."
-if git merge origin/main --no-edit; then
-    echo "$branch is current with main."
-else
-    git merge --abort
-    echo "main conflicts with $branch - not merged, nothing changed."
-    echo "  resolve by hand: git merge origin/main"
-fi
+printf '\n  main is %s commit(s) ahead of %s\n%s' \
+       "$(git rev-list --count HEAD..origin/main)" "$branch" "$diverged"
+printf '  reverse-merge when ready:  git merge origin/main\n\n'
