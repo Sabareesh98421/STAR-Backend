@@ -1,0 +1,21 @@
+{
+  "name": "@star/e2e",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "login": "node shared_browser/login-once.mjs",
+    "browser": "node shared_browser/serve.mjs",
+    "dev": "node shared_browser/serve.mjs",
+    "broadcast": "node ../../packages/browser-ensemble/broadcast.mjs",
+    "ensemble": "node ../../packages/browser-ensemble/ensemble.mjs",
+    "show": "node show.mjs",
+    "test": "bunx playwright test",
+    "test:ui": "bunx playwright test --ui"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0"
+  },
+  "dependencies": {
+    "@star/browser-ensemble": "workspace:*"
+  }
+}

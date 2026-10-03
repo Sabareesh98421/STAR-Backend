@@ -1,0 +1,45 @@
+#!/bin/sh
+# Reverse-merge main into the branch you're on, when main has moved.
+#
+# Local-only: gh is already authenticated, so no token and no CI. Runs from
+# post-checkout, so each branch gets current the moment you start working on
+# it - which is the only moment it matters.
+set -u
+
+branch=$(git symbolic-ref --short -q HEAD) || exit 0   # detached HEAD
+[ "$branch" = "main" ] && exit 0
+
+# Bring local main current without leaving this branch. A ref-to-ref fetch is
+# "checkout main, pull, checkout back" minus the switching - which matters,
+# because switching needs a clean tree and this one usually isn't. Git refuses
+# the write if it is not a fast-forward, so a diverged main is never clobbered.
+if ! git fetch --quiet origin main:main 2>/dev/null; then
+    git fetch --quiet origin main || exit 0
+    echo "note: local main has diverged from origin/main - left it alone."
+    echo "  merging from origin/main instead."
+fi
+
+git merge-base --is-ancestor origin/main HEAD && exit 0   # already current
+
+# gh decides whether this branch is in play. No open PR into main means it is
+# not asking to be kept current, so leave it alone.
+gh pr list --state open --base main --head "$branch" \
+   --json number --jq '.[].number' 2>/dev/null | grep -q . || exit 0
+
+behind=$(git rev-list --count HEAD..origin/main)
+
+# A dirty tree is the user's work in progress. Say something, touch nothing.
+if [ -n "$(git status --porcelain)" ]; then
+    echo "main is $behind commits ahead of $branch, and your tree is dirty."
+    echo "  commit or stash, then: git merge origin/main"
+    exit 0
+fi
+
+echo "merging main into $branch ($behind commits behind)..."
+if git merge origin/main --no-edit; then
+    echo "$branch is current with main."
+else
+    git merge --abort
+    echo "main conflicts with $branch - not merged, nothing changed."
+    echo "  resolve by hand: git merge origin/main"
+fi

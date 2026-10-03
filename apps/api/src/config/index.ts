@@ -8,3 +8,4 @@ export { signupConfig } from './signup.config';
 export { serverConfig } from './server.config';
 export { loggerConfig } from './logger.config';
 export { passwordConfig } from './password.config';
+export { ensembleConfig } from './ensemble.config';

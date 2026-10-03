@@ -39,13 +39,23 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 /db/
 
 # Prisma generated client
-/src/generated/
+apps/api/src/generated/
 
 # Playwright
-/test-results/
-/playwright-report/
+test-results/
+playwright-report/
+
+# e2e ensemble transcripts (the shared_browser submodule ignores its own
+# profile/recordings; parent-repo rules do not reach inside a submodule)
+apps/e2e/runs/
 
 /notes
 /graphify-out
-# local-only scripts
-/src/scripts/
+# Nuxt
+.nuxt
+.output
+.nitro
+
+# local-only scripts. Rebased from main's /src/scripts/ onto this branch's
+# monorepo prefix — the bare path no longer exists here.
+/apps/api/src/scripts/
