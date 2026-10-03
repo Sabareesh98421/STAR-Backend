@@ -1,7 +1,7 @@
 #!/bin/sh
 # Reverse-merge main into the branch you're on, when main has moved.
 #
-# Local-only: gh is already authenticated, so no token and no CI. Runs from
+# Local-only: no token, no CI, no network beyond the fetch. Runs from
 # post-checkout, so each branch gets current the moment you start working on
 # it - which is the only moment it matters.
 set -u
@@ -21,10 +21,9 @@ fi
 
 git merge-base --is-ancestor origin/main HEAD && exit 0   # already current
 
-# gh decides whether this branch is in play. No open PR into main means it is
-# not asking to be kept current, so leave it alone.
-gh pr list --state open --base main --head "$branch" \
-   --json number --jq '.[].number' 2>/dev/null | grep -q . || exit 0
+# Only branches that have been pushed. A purely local scratch branch is not
+# asking to be kept current, and this costs no network call.
+git rev-parse --verify -q "@{upstream}" >/dev/null 2>&1 || exit 0
 
 behind=$(git rev-list --count HEAD..origin/main)
 
