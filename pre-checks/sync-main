@@ -9,13 +9,22 @@ set -u
 branch=$(git symbolic-ref --short -q HEAD) || exit 0   # detached HEAD
 [ "$branch" = "main" ] && exit 0
 
+# Bring local main current without leaving this branch. A ref-to-ref fetch is
+# "checkout main, pull, checkout back" minus the switching - which matters,
+# because switching needs a clean tree and this one usually isn't. Git refuses
+# the write if it is not a fast-forward, so a diverged main is never clobbered.
+if ! git fetch --quiet origin main:main 2>/dev/null; then
+    git fetch --quiet origin main || exit 0
+    echo "note: local main has diverged from origin/main - left it alone."
+    echo "  merging from origin/main instead."
+fi
+
+git merge-base --is-ancestor origin/main HEAD && exit 0   # already current
+
 # gh decides whether this branch is in play. No open PR into main means it is
 # not asking to be kept current, so leave it alone.
 gh pr list --state open --base main --head "$branch" \
    --json number --jq '.[].number' 2>/dev/null | grep -q . || exit 0
-
-git fetch --quiet origin main || exit 0
-git merge-base --is-ancestor origin/main HEAD && exit 0   # already current
 
 behind=$(git rev-list --count HEAD..origin/main)
 
