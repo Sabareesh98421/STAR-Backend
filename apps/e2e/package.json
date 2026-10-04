@@ -5,10 +5,9 @@
   "scripts": {
     "login": "node shared_browser/login-once.mjs",
     "browser": "node shared_browser/serve.mjs",
-    "dev": "node shared_browser/serve.mjs",
-    "broadcast": "node ../../packages/browser-ensemble/broadcast.mjs",
-    "ensemble": "node ../../packages/browser-ensemble/ensemble.mjs",
-    "show": "node show.mjs",
+    "broadcast": "bun run ../../packages/browser-ensemble/broadcast.ts",
+    "ensemble": "RUNS_DIR=runs bun run ../../packages/browser-ensemble/ensemble.ts",
+    "show": "bun show.mjs",
     "test": "bunx playwright test",
     "test:ui": "bunx playwright test --ui"
   },
