@@ -1,5 +1,6 @@
 import {Elysia} from 'elysia';
 import masterRouter from './router';
+import { webRoutes } from './web';
 import { connectDatabase, disconnectDatabase } from '@/infrastructure/database';
 import { connectRedis, disconnectRedis } from '@/infrastructure/redis';
 import { logger } from '@/infrastructure/logger';
@@ -16,14 +17,23 @@ await TryCatch.of(async () => { await connectDatabase(); })
 await TryCatch.of(async () => { await connectRedis(); })
     .onError(logStartupFailure('Redis connection failed at startup, OTP endpoints will fail until it reconnects'));
 
+// Awaited before the server binds, so a request can never arrive while we are
+// still deciding whether there is a web build to serve.
+const web = await webRoutes();
+
 // Binds exclusively. Elysia's Bun adapter defaults to reusePort: true, which
 // is why several processes could silently share this exact port before -
 // reusePort: false here overrides that (it's spread after Elysia's default).
 // If the port is genuinely taken, walk forward one at a time (never a random
 // port) so whichever one it lands on is easy to find and stop.
-function startServer(port: number, attemptsLeft: number): Elysia {
+// The web wildcard goes on LAST: it answers anything the API did not, and
+// mounted first it would swallow routes that have a real handler. A fresh
+// instance per attempt, so a half-bound one is never retried.
+const buildApp = () => new Elysia().use(masterRouter).use(web);
+
+function startServer(port: number, attemptsLeft: number): ReturnType<typeof buildApp> {
     try {
-        return new Elysia().use(masterRouter).listen({ port, reusePort: false }, () => {
+        return buildApp().listen({ port, reusePort: false }, () => {
             console.log(`Server is running on port ${port}`);
         });
     } catch (error) {
