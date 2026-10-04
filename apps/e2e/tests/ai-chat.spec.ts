@@ -4,15 +4,15 @@
 // navigates or sends a prompt. An earlier version navigated each tab, which
 // would hijack the shared browser mid-run and corrupt an in-flight ensemble.
 import { test, expect, chromium, type Browser } from '@playwright/test';
-// @ts-expect-error — .mjs transport module, no types
 import { TARGETS } from '@star/browser-ensemble/broadcast';
+import { DEFAULT_CDP_URL } from '@star/browser-ensemble/types';
 
 type Target = { name: string; match: RegExp; composer: string };
 
 let browser: Browser;
 
 test.beforeAll(async () => {
-    browser = await chromium.connectOverCDP('http://localhost:9222');
+    browser = await chromium.connectOverCDP(DEFAULT_CDP_URL);
 });
 
 test.afterAll(async () => {
