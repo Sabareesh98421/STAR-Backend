@@ -1,11 +1,13 @@
 import { test as base, chromium, type Page, type Browser } from '@playwright/test';
-
-const CDP_URL = 'http://localhost:9222';
+// The endpoint the engine itself uses. Imported rather than retyped: a spec
+// holding its own copy of the URL keeps passing when the real one changes,
+// which is exactly when it should fail.
+import { DEFAULT_CDP_URL } from '@star/browser-ensemble/types';
 
 let _browser: Browser | null = null;
 
 async function getBrowser(): Promise<Browser> {
-    if (!_browser) _browser = await chromium.connectOverCDP(CDP_URL);
+    if (!_browser) _browser = await chromium.connectOverCDP(DEFAULT_CDP_URL);
     return _browser;
 }
 
