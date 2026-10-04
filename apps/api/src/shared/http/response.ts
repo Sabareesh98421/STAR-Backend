@@ -4,6 +4,7 @@ export default function response<T>(res:HTTPResponse<T>){
     const body=res.body
     return new Response(JSON.stringify(body),{
         status:res.status,
-        statusText:getStatusText(res.status)
+        statusText:getStatusText(res.status),
+        headers:{'content-type':'application/json'}
     });
 }
