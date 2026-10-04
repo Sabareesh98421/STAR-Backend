@@ -3,8 +3,8 @@
 //
 // Focus mode is the structural point of this panel: the Task Tracker survives,
 // everything retrospective collapses. Two panels sharing one position.
-import { CHAT_HISTORY, CONTEXT, CUSTOM_INSTRUCTIONS, REVIEW, TASKS } from '../domain/fixtures';
 import type { Agent, AgentRuntime, LinkState, Review, RunStatus } from '../domain/run';
+import type { ChatSessionSummary, ChatTurn } from '@star/run-protocol/chat';
 
 defineProps<{
     focusMode: boolean;
@@ -16,8 +16,18 @@ defineProps<{
     status: RunStatus;
     link: LinkState;
     leaderNote: string | null;
+    sessions: ChatSessionSummary[];
+    sessionId: string | null;
+    turns: ChatTurn[];
+    asking: string | null;
 }>();
-defineEmits<{ 'toggle-go-live': []; 'execute-review': [] }>();
+defineEmits<{
+    'toggle-go-live': [];
+    'execute-review': [];
+    'open-session': [string];
+    'open-turn': [string];
+    'new-chat': [];
+}>();
 
 // Rail rows sit flush against the panel padding; the task tree indents by 24.
 const RAIL_ROWS = '[--row-px:0px] [--row-indent:--spacing(6)]';
@@ -30,7 +40,7 @@ const RAIL_ROWS = '[--row-px:0px] [--row-indent:--spacing(6)]';
     >
         <section class="flex flex-col gap-2" :class="RAIL_ROWS">
             <h2 class="font-mono text-12 font-normal leading-none text-ink-40">Task Tracker</h2>
-            <ObjectRow v-for="row in TASKS" :key="row.id" :row="row" :hint="hint" />
+            <p class="font-mono text-12 text-ink-30">empty</p>
         </section>
 
         <!-- The brief makes the task tracker and the agent threads the two
@@ -49,19 +59,28 @@ const RAIL_ROWS = '[--row-px:0px] [--row-indent:--spacing(6)]';
             <!-- Frame 3's rail carries only Task Tracker, Context, Go-Live and
                  the pinned Review. Retrospective sections stand down so the
                  review has room. -->
-            <section v-if="!goLive" class="flex flex-col gap-2" :class="RAIL_ROWS">
-                <h2 class="font-mono text-12 font-normal leading-none text-ink-40">Chat History</h2>
-                <ObjectRow v-for="row in CHAT_HISTORY" :key="row.id" :row="row" :hint="hint" />
-            </section>
+            <ChatHistory
+                v-if="!goLive"
+                :class="RAIL_ROWS"
+                :sessions="sessions"
+                :session-id="sessionId"
+                :turns="turns"
+                :asking="asking"
+                :status="status"
+                :hint="hint"
+                @open-session="$emit('open-session', $event)"
+                @open-turn="$emit('open-turn', $event)"
+                @new-chat="$emit('new-chat')"
+            />
 
             <section class="flex flex-col gap-2" :class="RAIL_ROWS">
                 <h2 class="font-mono text-12 font-normal leading-none text-ink-40">Context</h2>
-                <ObjectRow v-for="row in CONTEXT" :key="row.id" :row="row" :hint="hint" />
+                <p class="font-mono text-12 text-ink-30">empty</p>
             </section>
 
             <section v-if="!goLive" class="flex flex-col gap-2">
                 <h2 class="font-mono text-12 font-normal leading-none text-ink-40">Custom Instructions</h2>
-                <p class="text-13 leading-5 text-ink-85">{{ CUSTOM_INSTRUCTIONS }}</p>
+                <p class="font-mono text-12 text-ink-30">empty</p>
             </section>
 
             <div class="flex flex-col gap-1">
@@ -88,20 +107,8 @@ const RAIL_ROWS = '[--row-px:0px] [--row-indent:--spacing(6)]';
             </div>
 
             <section v-if="goLive" class="mt-auto flex flex-col gap-2" :class="RAIL_ROWS">
-                <h2 class="font-mono text-12 font-normal leading-none text-ink-40">
-                    Review · {{ REVIEW.commit }}
-                </h2>
-                <div v-for="f in REVIEW.findings" :key="f.id" class="flex flex-col gap-0.5 py-1">
-                    <div class="flex items-center gap-3">
-                        <StatusGlyph :name="f.marker" />
-                        <span class="text-13 leading-none">{{ f.title }}</span>
-                    </div>
-                    <p class="ps-6 font-mono text-12 leading-none text-ink-40">{{ f.origin }}</p>
-                </div>
-                <ObjectRow
-                    :row="{ id: 'closed', marker: 'closed', label: `${REVIEW.closedCount} closed`, meta: null, shortcut: null }"
-                    :hint="hint"
-                />
+                <h2 class="font-mono text-12 font-normal leading-none text-ink-40">Review</h2>
+                <p class="font-mono text-12 text-ink-30">empty</p>
                 <button
                     type="button"
                     class="mt-2 flex h-8 items-center justify-between rounded-chip bg-accent-18 px-3"
