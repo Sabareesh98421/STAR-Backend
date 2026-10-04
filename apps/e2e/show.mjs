@@ -1,8 +1,11 @@
 // show.mjs — read back an ensemble transcript.
 //
-//   node show.mjs              # newest run, summary
-//   node show.mjs --full       # newest run, full response text
-//   node show.mjs runs/x.json  # a specific run
+//   bun show.mjs              # newest run, summary
+//   bun show.mjs --full       # newest run, full response text
+//   bun show.mjs runs/x.json  # a specific run
+//
+// Runs under Bun: it only reads files. Node in this package is confined to the
+// scripts that drive Chrome over CDP, which is the one thing Bun cannot do.
 //
 // Separate from ensemble.mjs on purpose: a run costs minutes of real chat UI
 // time, so inspecting one again should never risk re-triggering it.
