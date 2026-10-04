@@ -4,8 +4,26 @@
     {
       "name": "web",
       "runtimeExecutable": "bun",
-      "runtimeArgs": ["run", "--filter", "@star/web", "dev"],
-      "port": 3001
+      "runtimeArgs": [
+        "run",
+        "--filter",
+        "@star/web",
+        "dev"
+      ],
+      "port": 3001,
+      "autoPort": false
+    },
+    {
+      "name": "api",
+      "runtimeExecutable": "bun",
+      "runtimeArgs": [
+        "run",
+        "--filter",
+        "@star/api",
+        "dev"
+      ],
+      "port": 10108,
+      "autoPort": false
     }
   ]
 }
