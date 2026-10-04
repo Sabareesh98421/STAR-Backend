@@ -1,0 +1,236 @@
+###############################################################################
+# STAR API — every route, including the chat socket.
+#
+# Run these from an HTTP client that reads `.http` files: JetBrains' built-in
+# one, or the VS Code REST Client extension. The `WEBSOCKET` block at the
+# bottom is JetBrains-only; a curl/websocat equivalent sits beside it so the
+# socket is reachable either way.
+#
+# PORT: this is the one file in the repo that cannot read the monorepo .env
+# (a static .http has no way to), so `@port` below mirrors API_PORT. Change
+# both together, or point @host at the web dev server instead and let the dev
+# proxy forward — which is also the only way to exercise the exact path the
+# browser takes.
+###############################################################################
+
+@port = 10108
+@webPort = 3001
+
+# Straight at the API.
+@host = http://localhost:{{port}}
+@ws   = ws://localhost:{{port}}
+
+# Through the web dev server's proxy — same origin as the browser uses.
+# Swap these in to test the proxy path rather than the API directly.
+# @host = http://localhost:{{webPort}}
+# @ws   = ws://localhost:{{webPort}}
+
+# Every response is the project envelope, verified against a running server:
+#
+#   success  {"success": true,  "message": "...", "data": { ... }}
+#   failure  {"success": false, "message": "...", "error": {"code": "...",
+#                                                            "details": {...}}}
+#
+# `details` is per-field and present on VALIDATION_ERROR. Validation failures
+# are 400 and name the offending field — never a bare 500.
+
+### Liveness. The only API route outside a feature module. 200, empty body.
+GET {{host}}/api/
+
+### Not an API route, listed so the 404s make sense: anything NOT under /api
+### is served from the built web app (apps/api/src/server/web.ts), and an
+### unknown client-side path returns the SPA shell rather than a 404. An
+### unknown path UNDER /api stays a real 404, so a client expecting JSON is
+### never handed HTML. Returns 404 until `bun run build` has been run once.
+GET {{host}}/
+
+
+###############################################################################
+# AUTH · email
+#
+# Signup does NOT create a user. It parks a pending record in Redis for 15
+# minutes; the user row is written only when /otp/verify succeeds. So the
+# order is always signup -> otp/request -> otp/verify.
+###############################################################################
+
+### Sign up. Password needs 8+ chars with a lower, an upper, a digit and a
+### special; confirmPassword must match or it is a 400 on `confirmPassword`.
+### secondName is optional and may be omitted entirely.
+POST {{host}}/api/auth/email/signup
+Content-Type: application/json
+
+{
+  "firstName": "Ada",
+  "secondName": "Lovelace",
+  "email": "ada@example.com",
+  "password": "Str0ng!passw0rd",
+  "confirmPassword": "Str0ng!passw0rd"
+}
+
+### Sign in.
+POST {{host}}/api/auth/email/signin
+Content-Type: application/json
+
+{
+  "email": "ada@example.com",
+  "password": "Str0ng!passw0rd"
+}
+
+### Sign out. Currently a no-op handler — no session to tear down yet.
+POST {{host}}/api/auth/email/signout
+
+
+###############################################################################
+# AUTH · OTP
+#
+# `purpose` defaults to "verify-email", the only value the enum has today.
+# Requesting for an email with no pending signup is refused: that mismatch is
+# the whole reason signup parks a record first.
+###############################################################################
+
+### Send a code. Subject to a resend cooldown (OTP_RESEND_COOLDOWN_SECONDS).
+POST {{host}}/api/auth/otp/request
+Content-Type: application/json
+
+{
+  "email": "ada@example.com",
+  "purpose": "verify-email"
+}
+
+### Verify it. `otp` must be exactly OTP_LENGTH digits. Success is what
+### actually creates the Postgres user and clears the pending record.
+POST {{host}}/api/auth/otp/verify
+Content-Type: application/json
+
+{
+  "email": "ada@example.com",
+  "purpose": "verify-email",
+  "otp": "123456"
+}
+
+
+###############################################################################
+# ENSEMBLE · history (reads, plus the one write that makes a conversation)
+#
+# Asking a question is NOT here. A turn is started over the conversation's own
+# socket, below: the client has to talk back mid-run, and a run arriving over
+# a second transport would belong to no conversation and show in no history.
+###############################################################################
+
+### Create a conversation. Send the whole first prompt — the server shortens
+### it into the title. The id this returns is what the socket url is built
+### from, so capture it.
+# @name createSession
+POST {{host}}/api/ensemble/sessions
+Content-Type: application/json
+
+{
+  "title": "In two sentences, why is the sky blue?"
+}
+
+### Reuse the id from the call above in every request below.
+@sessionId = {{createSession.response.body.data.session.id}}
+
+### List conversations, newest first. `limit` is optional: defaults to
+### ENSEMBLE_SESSION_LIMIT (30), capped at ENSEMBLE_MAX_HISTORY_LIMIT (100).
+GET {{host}}/api/ensemble/sessions?limit=30
+
+### One conversation: `data.session` plus `data.turns`, oldest first. Each
+### turn is a summary (id, question, status, modelCount, answeredCount,
+### changedModels) — transcripts are NOT included, because twelve of them is
+### hundreds of kilobytes nobody asked to read. Fetch one from /runs/:id.
+### 404 if the id is unknown, 400 if it is not a uuid.
+GET {{host}}/api/ensemble/sessions/{{sessionId}}
+
+### Every run, newest first, across all conversations. Defaults to
+### ENSEMBLE_HISTORY_LIMIT (20).
+# @name listRuns
+GET {{host}}/api/ensemble/runs?limit=20
+
+### One run, with the full transcript — this is the file the editor opens.
+### `rounds` is null here: the rounds hold every prompt that was sent and every
+### answer that came back, which is the transcript's own text three to five
+### times over, and the editor reads `data.file` and nothing else.
+GET {{host}}/api/ensemble/runs/{{listRuns.response.body.data.runs[0].id}}
+
+### The same run WITH its rounds — `data.rounds[].sent` is the exact prompt each
+### model received, which is the only way to diagnose a disagreement between
+### rounds after the fact. Opt-in because of the size. Anything that is not a
+### boolean ('1', 'true', '0', 'false') is a 400 rather than a guess.
+GET {{host}}/api/ensemble/runs/{{listRuns.response.body.data.runs[0].id}}?rounds=1
+
+
+###############################################################################
+# ENSEMBLE · the chat socket
+#
+#   {{ws}}/api/ws/chat/:sessionId?since=<lastSeqApplied>
+#
+# Mounted inside the same /api router as everything above, so the /api prefix
+# is part of the path. `since` is the last event seq the client applied;
+# reconnecting mid-run resumes from it rather than replaying the turn from
+# zero or leaving a hole. Use 0 for a fresh connection.
+#
+# The handshake is origin-checked, because browsers do NOT apply CORS to a
+# WebSocket upgrade — @elysiajs/cors cannot guard this route, so it guards
+# itself. A client that sends NO Origin (curl, websocat, this file) is let
+# through; a browser always sends one and it must either be in WEB_ORIGINS or
+# be same-origin on loopback. An Origin that is neither gets 401 at the
+# handshake, not a close after it.
+#
+# Client -> server, the only message there is:
+#   {"type":"turn.start","prompt":"...","rounds":null}
+#   `rounds` null means the server's configured default (ENSEMBLE_ROUNDS);
+#   an integer is clamped to ENSEMBLE_MAX_ROUNDS.
+#
+# Server -> client: run.started, run.status, agent.phase, review.added,
+# leader.note and a final file, each carrying a `seq`; plus {"type":"error"}
+# for a refusal, which does NOT close the socket.
+#
+# A turn takes MINUTES — it drives three real logged-in chat tabs — and there
+# is no cancel: closing the socket stops delivery, never the work.
+###############################################################################
+
+### JetBrains HTTP Client only. VS Code REST Client cannot open a WebSocket.
+WEBSOCKET {{ws}}/api/ws/chat/{{sessionId}}?since=0
+
+=== wait-for-server
+{"type": "turn.start", "prompt": "In two sentences, why is the sky blue?", "rounds": null}
+
+###
+# Any other client:
+#   websocat 'ws://localhost:10108/api/ws/chat/<sessionId>?since=0'
+#   then paste: {"type":"turn.start","prompt":"hello","rounds":null}
+#
+# Or check just the handshake, without starting a run:
+#   curl -i -N -H 'Connection: Upgrade' -H 'Upgrade: websocket' \
+#        -H 'Sec-WebSocket-Version: 13' -H 'Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==' \
+#        'http://localhost:10108/api/ws/chat/<sessionId>?since=0'
+# Handshake codes, all four confirmed against a running server:
+#   101 accepted (no Origin, or an allowed one) · 401 Origin refused
+#   404 no such session · 400 id is not a uuid
+
+
+###############################################################################
+# Failure cases worth having one click away.
+###############################################################################
+
+### 400, naming the field — not a 500. (Zod reports a path as segments, and
+### calling .replace on the array used to throw inside the error handler.)
+POST {{host}}/api/ensemble/sessions
+Content-Type: application/json
+
+{
+  "title": "   "
+}
+
+### 400: malformed JSON is the client's fault and must not read as transient.
+POST {{host}}/api/ensemble/sessions
+Content-Type: application/json
+
+{ "title": }
+
+### 400: an id that is not a uuid.
+GET {{host}}/api/ensemble/sessions/not-a-uuid
+
+### 404: a well-formed id that is not there.
+GET {{host}}/api/ensemble/sessions/00000000-0000-4000-8000-000000000000
