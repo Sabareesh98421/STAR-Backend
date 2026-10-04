@@ -8,14 +8,11 @@
   ],
   "scripts": {
     "postinstall": "git config core.hooksPath pre-checks || true",
-    "dev": "concurrently -n api,web,cdp -c blue,green,magenta --kill-others-on-fail 'bun run dev:api' 'bun run dev:web' 'bun run dev:cdp'",
-    "dev:api": "cd apps/api && bun run dev",
-    "dev:web": "cd apps/web && bun run dev",
-    "dev:cdp": "cd apps/e2e && bun run dev",
+    "dev": "bun run --filter '@star/api' --filter '@star/web' dev",
+    "browser": "bun run --filter @star/e2e browser",
+    "build": "bun run --filter '@star/web' build",
+    "start": "cd apps/api && bun run start",
     "test": "bun run --filter '*' test",
     "lint": "bun run --filter '*' lint"
-  },
-  "devDependencies": {
-    "concurrently": "^10.0.5"
   }
 }
