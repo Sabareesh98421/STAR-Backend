@@ -8,8 +8,13 @@
  * survive the morph.
  */
 import { computed, nextTick, ref, watch } from 'vue';
-import { COMMANDS, FILE_TREE } from '../domain/fixtures';
-import { RESERVED_PREFIXES, type ShellLayer, type SpotlightPrefix } from '../domain/workspace';
+import { prefixLabel, SLASH, slashEntry, SLASH_STOP, type SlashActionName, type SlashCommand } from '../domain/slash';
+import {
+    RESERVED_PREFIXES,
+    type ObjectRow as ObjectRowType,
+    type ShellLayer,
+    type SpotlightPrefix,
+} from '../domain/workspace';
 
 const props = defineProps<{
     layer: ShellLayer;
@@ -17,9 +22,18 @@ const props = defineProps<{
     prefix: SpotlightPrefix | null;
     hint: boolean;
     busy: boolean;
+    /** What the open prefix lists. The parent owns the data; this lists it. */
+    rows: readonly ObjectRowType[];
 }>();
 
-const emit = defineEmits<{ submit: [string]; open: [string]; cancel: [] }>();
+const emit = defineEmits<{
+    submit: [string];
+    open: [string];
+    command: [SpotlightPrefix];
+    /** A slash command with no list of its own. Carries the entry's name,
+     *  narrowed to the registry so the parent's handler map stays exhaustive. */
+    action: [SlashActionName];
+}>();
 
 const text = ref('');
 const input = ref<HTMLInputElement | null>(null);
@@ -29,9 +43,10 @@ const state = computed(() =>
     props.layer === 'spotlight' ? 'spotlight' : props.focusMode ? 'pill' : 'rest',
 );
 
-const source = computed(() =>
-    props.prefix === 'fs' ? FILE_TREE : props.prefix === 'cmd' ? COMMANDS : [],
-);
+// fs: and cmd: are still unfed — the project tree and the command list are
+// data this app has no source for — so they show the same empty state they
+// always did. /history has a source, and it arrives through the same door.
+const source = computed(() => props.rows);
 
 /** Typing filters. This is the whole point of the spotlight. */
 const results = computed(() => {
@@ -43,6 +58,29 @@ const results = computed(() => {
 });
 
 watch(results, () => (active.value = 0));
+
+/**
+ * Runs a slash command: one that names a list travels the field up to it, the
+ * way `fs:` does; one that names none fires as an action and leaves the field
+ * where it is. Which it is comes from the registry, so adding a command here
+ * is adding a line to `domain/slash.ts`.
+ */
+function run(entry: SlashCommand) {
+    text.value = '';
+    if (entry.prefix) emit('command', entry.prefix);
+    else emit('action', entry.name);
+}
+
+/**
+ * A command fires as it is finished typing, on the whole name rather than on
+ * the bare slash, so the field does not jump out from under a prompt that
+ * merely starts with one.
+ */
+watch(text, (typed) => {
+    if (state.value !== 'rest') return;
+    const entry = slashEntry(typed);
+    if (entry) run(entry);
+});
 
 // The field takes focus whenever it changes role, so it is always typeable.
 watch(
@@ -63,15 +101,32 @@ function move(delta: number) {
 
 function commit() {
     if (state.value === 'spotlight') {
+        // The id, not the label: the parent owns these rows and is the only
+        // side that knows what opening one means.
         const chosen = results.value[active.value];
-        if (chosen) emit('open', chosen.label);
+        if (chosen) emit('open', chosen.id);
         return;
     }
     const prompt = text.value.trim();
     if (!prompt) return;
+
+    // The watch above has normally fired already. Not always: text pasted and
+    // submitted inside one tick arrives here untouched, and a command sent to
+    // the ensemble as a question is a turn nobody asked for. The composer is
+    // the last gate, so it is checked here too.
+    const entry = slashEntry(prompt);
+    if (entry) return run(entry);
+
     text.value = '';
     emit('submit', prompt);
 }
+
+/**
+ * Emptied from outside when what was typed no longer belongs to the field —
+ * starting a new chat is the case. The text lives here because the field is
+ * never unmounted, so the parent cannot clear it by any other means.
+ */
+defineExpose({ clear: () => (text.value = '') });
 
 /** Rest sits 24px off the bottom; spotlight anchors 18% down and grows from there. */
 const y = computed(() => (state.value === 'spotlight' ? '18dvh' : 'calc(100dvh - 52px - 24px)'));
@@ -96,12 +151,12 @@ const y = computed(() => (state.value === 'spotlight' ? '18dvh' : 'calc(100dvh -
                 v-if="state === 'rest'"
                 type="button"
                 class="shrink-0 rounded-chip bg-accent-18 px-2 py-[5px] font-mono text-12 font-medium leading-none text-accent"
-                :title="busy ? 'Cancel the run' : 'Send to the ensemble'"
-                @click="busy ? emit('cancel') : commit()"
-            >{{ busy ? 'stop' : 'agent' }}</button>
+                :title="busy ? SLASH_STOP.hint : 'Send to the ensemble'"
+                @click="busy ? emit('action', SLASH_STOP.name) : commit()"
+            >{{ busy ? SLASH_STOP.name : 'agent' }}</button>
 
             <span v-if="prefix && state === 'spotlight'" class="shrink-0 font-mono text-13 leading-none">
-                {{ prefix }}:
+                {{ prefixLabel(prefix) }}
             </span>
 
             <!-- One input for every role the field plays. Hidden, not removed,
@@ -141,7 +196,7 @@ const y = computed(() => (state.value === 'spotlight' ? '18dvh' : 'calc(100dvh -
                     :key="row.id"
                     :row="row"
                     :hint="hint"
-                    :guide="prefix === 'fs'"
+                    :guide="prefix !== 'cmd'"
                     :select="i === active ? 'accent' : 'none'"
                     class="cursor-pointer"
                     @click="active = i; commit()"
@@ -156,6 +211,16 @@ const y = computed(() => (state.value === 'spotlight' ? '18dvh' : 'calc(100dvh -
                 <p class="text-13 leading-snug text-ink-40">type to find a file</p>
                 <p class="font-mono text-13 leading-snug text-ink-40">
                     fs:&nbsp; project tree&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; cmd:&nbsp; commands
+                </p>
+                <!-- The help panel is the registry, listed. A command that is
+                     not in it cannot be typed, and one that is cannot go
+                     undocumented here. -->
+                <p
+                    v-for="entry in SLASH"
+                    :key="entry.name"
+                    class="font-mono text-13 leading-snug text-ink-40"
+                >
+                    /{{ entry.name }}&nbsp; {{ entry.hint }}
                 </p>
             </div>
         </div>
