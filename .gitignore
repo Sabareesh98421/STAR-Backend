@@ -59,3 +59,10 @@ apps/e2e/runs/
 # local-only scripts. Rebased from main's /src/scripts/ onto this branch's
 # monorepo prefix — the bare path no longer exists here.
 /apps/api/src/scripts/
+
+# Ensemble transcripts. Real prompts and real model answers — local evidence,
+# not source.
+runs/
+
+# Working notes and architecture snapshots. Local scratch, not source.
+progress/

@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { applyEvent, emptyRunState, phaseLabel, type RunEvent } from './run';
-import { makeLocalRunTransport } from '../transport/run.transport';
+import { makeLocalRunTransport } from '../transport/run.transport.fixture';
 
 const transport = makeLocalRunTransport(0);
 
@@ -92,4 +92,73 @@ test('phase labels never carry severity language', () => {
     }
     expect(phaseLabel({ phase: 'done', reviewsGiven: 0, reviewsReceived: 0 })).toBe('no findings');
     expect(phaseLabel({ phase: 'done', reviewsGiven: 0, reviewsReceived: 1 })).toBe('1 finding');
+});
+
+// --- the events the real transport adds -------------------------------------
+
+test('a settled answer is stored under its own agent', () => {
+    const state = emptyRunState();
+    applyEvent(state, { seq: 1, type: 'agent.response', agentId: 'gemini', round: 'draft', iteration: 0, text: 'A', ok: true, error: null });
+    applyEvent(state, { seq: 2, type: 'agent.response', agentId: 'claude', round: 'draft', iteration: 0, text: 'B', ok: true, error: null });
+
+    expect(state.responses).toEqual({ gemini: 'A', claude: 'B' });
+});
+
+test('a later round replaces an answer rather than appending to it', () => {
+    const state = emptyRunState();
+    applyEvent(state, { seq: 1, type: 'agent.response', agentId: 'gemini', round: 'draft', iteration: 0, text: 'draft', ok: true, error: null });
+    applyEvent(state, { seq: 2, type: 'agent.response', agentId: 'gemini', round: 'revise', iteration: 1, text: 'revised', ok: true, error: null });
+
+    expect(state.responses.gemini).toBe('revised');
+});
+
+test('a failed model does not erase the answer it already gave', () => {
+    // A dropout in a later round must not read as a model that answered
+    // nothing — that is the difference between two-way and three-way agreement.
+    const state = emptyRunState();
+    applyEvent(state, { seq: 1, type: 'agent.response', agentId: 'gemini', round: 'draft', iteration: 0, text: 'draft', ok: true, error: null });
+    applyEvent(state, { seq: 2, type: 'agent.response', agentId: 'gemini', round: 'revise', iteration: 1, text: '', ok: false, error: 'timed out' });
+
+    expect(state.responses.gemini).toBe('draft');
+});
+
+test('the transcript file is held until a run produces one', () => {
+    const state = emptyRunState();
+    expect(state.file).toBeNull();
+
+    applyEvent(state, { seq: 1, type: 'run.file', name: 'run-x.md', text: '# answer' });
+    expect(state.file).toEqual({ name: 'run-x.md', text: '# answer' });
+});
+
+test('an error advances the cursor, so a reconnect does not replay it', () => {
+    const state = emptyRunState();
+    applyEvent(state, { seq: 1, type: 'run.started', agents: [], prompt: 'q' });
+    applyEvent(state, { seq: 2, type: 'error', code: 'CONFLICT', message: 'busy', details: null });
+
+    // The protocol puts a seq on the error for exactly this reason: left behind
+    // the cursor, it came back on every reconnect for the rest of the turn and
+    // raised its toast again each time.
+    expect(state.cursor).toBe(2);
+});
+
+test('a connection-scoped refusal does not drag the cursor back to the start', () => {
+    const state = emptyRunState();
+    applyEvent(state, { seq: 7, type: 'run.status', status: 'reviewing' });
+    // seq 0 is 'belongs to no turn's sequence' — a refused turn, a rejected
+    // message. Taken literally it would resume the socket from zero and replay
+    // the whole run over the top of itself.
+    applyEvent(state, { seq: 0, type: 'error', code: 'CONFLICT', message: 'busy', details: null });
+
+    expect(state.cursor).toBe(7);
+});
+
+test('a second turn restarts the cursor at its own seq 1', () => {
+    const state = emptyRunState();
+    applyEvent(state, { seq: 11, type: 'run.status', status: 'complete' });
+    // A turn numbers its messages from 1, so the next turn on the same
+    // conversation opens below the last one's high-water mark. Held at the mark,
+    // a reconnect would resume past this turn's opening and never ask for it.
+    applyEvent(state, { seq: 1, type: 'run.started', agents: [], prompt: 'next' });
+
+    expect(state.cursor).toBe(1);
 });

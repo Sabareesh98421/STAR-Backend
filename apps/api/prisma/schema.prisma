@@ -18,3 +18,129 @@ model User {
 
   @@map("users")
 }
+
+/// One conversation. A session is an ordered list of turns, and a turn is one
+/// ensemble run — so a session is what a user comes back to, reopens, reads and
+/// adds to. It exists as its own row rather than being derived from the runs
+/// that share an id because `title` has to live somewhere and because an
+/// unanswered session (created, never asked) is still a session.
+model ChatSession {
+  id String @id @default(uuid())
+  /// The first turn's question, taken once at creation. Derived on read it
+  /// would change meaning the day a session is renamed or its first turn
+  /// deleted.
+  title String
+
+  createdAt DateTime @default(now()) @map("created_at")
+  /// Bumped by every turn, so the rail orders by recent activity rather than
+  /// by when a conversation was first opened.
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  runs EnsembleRun[]
+
+  @@index([updatedAt])
+  @@map("chat_sessions")
+}
+
+/// One ensemble run: minutes of real browser time that cannot be reproduced
+/// identically, so the record is the experiment. A run that failed partway is
+/// still written, with whatever rounds it finished — status says which.
+///
+/// `status` is a String and not an enum because the values are RunStatus in
+/// @star/run-protocol, shared with the web app. A Prisma enum would be a second
+/// copy of that list, free to drift from the one the client actually applies.
+model EnsembleRun {
+  id       String @id @default(uuid())
+  /// The user's own text for this turn. NOT what the models received: from the
+  /// second turn on, the prompt each model is sent carries that model's prior
+  /// answers ahead of it, and the exact text is recorded per round in
+  /// `EnsembleRound.sent`.
+  question String
+
+  /// The conversation this turn belongs to. Required: a run with no session is
+  /// a run the history cannot list, which reads as a run that never happened.
+  sessionId String      @map("session_id")
+  session   ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  startedAt DateTime  @map("started_at")
+  /// Null while a run is still going, or if it died without finishing.
+  finishedAt DateTime? @map("finished_at")
+  status     String
+
+  modelCount Int @map("model_count")
+  /// How many models produced an answer. Differs from modelCount on a dropout,
+  /// which is the difference between two-way and three-way agreement.
+  answeredCount Int @map("answered_count")
+  /// Models whose revised answer differs from their draft. The result.
+  changedModels String[] @map("changed_models")
+
+  /// Earlier turns as each model was given them. Once per run, not per round:
+  /// every round prepends the same block, so `EnsembleRound.sent` holds the
+  /// round's own prompt and this is what was in front of it. `{}` on a first turn.
+  context Json @default("{}")
+
+  /// The rendered transcript, stored rather than re-rendered on read: the file
+  /// a run was judged from has to keep reading the way it did that day.
+  fileName String @map("file_name")
+  fileText String @map("file_text")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  rounds EnsembleRound[]
+
+  @@index([startedAt])
+  /// Turns of one session, in order — the read behind reopening a chat.
+  @@index([sessionId, startedAt])
+  @@map("ensemble_runs")
+}
+
+model EnsembleRound {
+  id    String      @id @default(uuid())
+  runId String      @map("run_id")
+  run   EnsembleRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+
+  /// draft | review | revise. Same reasoning as EnsembleRun.status.
+  kind String
+  /// 0 for the draft; 1..n for each review/revise pass.
+  iteration Int
+  /// Position in the run, so rounds read back in the order they happened.
+  /// `at` alone would order them only as long as no two share a millisecond.
+  seq Int
+  at  DateTime
+
+  /// The exact prompt each model received, keyed by model. Without it a
+  /// disagreement between rounds cannot be diagnosed after the fact.
+  sent Json
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  responses EnsembleResponse[]
+
+  @@unique([runId, seq])
+  @@map("ensemble_rounds")
+}
+
+model EnsembleResponse {
+  id      String        @id @default(uuid())
+  roundId String        @map("round_id")
+  round   EnsembleRound @relation(fields: [roundId], references: [id], onDelete: Cascade)
+
+  model String
+  ok    Boolean
+  text  String
+  ms    Int
+  /// The chat thread this answer was read from. Every round opens a fresh chat
+  /// per model, so one run leaves a conversation per model per round and this
+  /// URL is the only way to confirm afterwards that a model really said it.
+  /// Null — never '' — for a model that failed before producing one.
+  threadUrl String? @map("thread_url")
+  error     String?
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([roundId, model])
+  @@map("ensemble_responses")
+}

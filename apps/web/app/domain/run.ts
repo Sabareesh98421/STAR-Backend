@@ -6,30 +6,19 @@
  * review finding · agent thread", so an agent thread and a review finding are
  * both ROWs. Rows, not columns, which is the only layout that survives an
  * unknown N.
+ *
+ * The wire vocabulary lives in @star/run-protocol, shared with the API. What is
+ * here is the client's own: how a run is stored and how an event changes it.
+ * Re-exported so components keep importing their types from one place.
  */
+import type { Agent, AgentPhase, Review, RunStatus } from '@star/run-protocol';
+import { RunEventType } from '@star/run-protocol';
+import type { ChatServerMessage } from '@star/run-protocol/chat';
 
-/** Backend truth about the run. Never changed by a network hiccup. */
-export type RunStatus =
-    | 'idle'
-    | 'responding'
-    | 'reviewing'
-    | 'synthesizing'
-    | 'complete'
-    | 'failed'
-    | 'cancelled';
-
-/** Where one participant is in the round. */
-export type AgentPhase = 'waiting' | 'responding' | 'reviewing' | 'done' | 'failed';
+export type { Agent, AgentPhase, Review, ReviewKind, RunEvent, RunStatus } from '@star/run-protocol';
 
 /** Our connection, not the run. A drop moves this and nothing else. */
 export type LinkState = 'live' | 'reconnecting' | 'offline';
-
-export interface Agent {
-    readonly id: string;
-    readonly name: string;
-    /** The Leader holds internet access and RAG; participants do not. */
-    readonly isLeader: boolean;
-}
 
 export interface AgentRuntime {
     phase: AgentPhase;
@@ -39,47 +28,10 @@ export interface AgentRuntime {
     reviewsReceived: number;
 }
 
-/** Sheet A's categories for what a peer can flag. Never a severity colour. */
-export type ReviewKind =
-    | 'factual'
-    | 'reasoning'
-    | 'omission'
-    | 'assumption'
-    | 'contradiction';
-
-export interface Review {
-    readonly id: string;
-    /** Who wrote it. */
-    readonly byAgentId: string;
-    /** Whose response it is about. Peer review, never self. */
-    readonly aboutAgentId: string;
-    readonly kind: ReviewKind;
-    readonly note: string;
-}
-
-/**
- * Events carry a monotonic seq so a reconnect can resume with ?since=<seq>
- * instead of replaying the run. See docs/frontend-architecture.md.
- */
-export type RunEvent =
-    | { seq: number; type: 'run.started'; agents: readonly Agent[]; prompt: string }
-    | { seq: number; type: 'agent.phase'; agentId: string; phase: AgentPhase }
-    | { seq: number; type: 'agent.token'; agentId: string; text: string }
-    | {
-          seq: number;
-          type: 'agent.response';
-          agentId: string;
-          /** Which round produced it: draft, review or revise. */
-          round: string;
-          iteration: number;
-          text: string;
-          ok: boolean;
-          error: string | null;
-      }
-    | { seq: number; type: 'review.added'; review: Review }
-    | { seq: number; type: 'run.status'; status: RunStatus }
-    | { seq: number; type: 'leader.note'; text: string }
-    | { seq: number; type: 'run.file'; name: string; text: string };
+/** Whether the server is still working on the turn. The composer's busy state,
+ *  the rail's live row and the marker table all ask this one question. */
+export const isRunning = (status: RunStatus): boolean =>
+    status === 'responding' || status === 'reviewing' || status === 'synthesizing';
 
 export const PHASE_MARKER = {
     waiting: 'closed',
@@ -120,7 +72,10 @@ export interface RunState {
     status: RunStatus;
     agents: Record<string, Agent>;
     runtime: Record<string, AgentRuntime>;
+    /** Empty until something sends `review.added` — see PENDING in
+     *  @star/run-protocol. Bounded by agents x rounds once one does. */
     reviews: Review[];
+    /** Empty while there is no leader. Same PENDING list. */
     leaderNote: string | null;
     /**
      * The latest settled answer per agent. Bounded by the agent count like
@@ -148,25 +103,34 @@ export function emptyRunState(): RunState {
     };
 }
 
-/** Pure apart from mutating the state it is handed, so it can be tested alone. */
-export function applyEvent(state: RunState, event: RunEvent): void {
-    state.cursor = event.seq;
+/**
+ * Pure apart from mutating the state it is handed, so it can be tested alone.
+ *
+ * Takes the whole server union, error included: the cursor has one writer and
+ * this is it, and an error that does not advance it is replayed on every
+ * reconnect for the rest of the turn.
+ */
+export function applyEvent(state: RunState, event: ChatServerMessage): void {
+    // seq 0 belongs to no turn's sequence and would resume from the start of
+    // the run. Any other seq is followed exactly, smaller ones included — a
+    // second turn numbers its own messages from 1.
+    if (event.seq > 0) state.cursor = event.seq;
 
     switch (event.type) {
-        case 'run.started':
+        case RunEventType.started:
             state.agents = Object.fromEntries(event.agents.map((a) => [a.id, a]));
             state.runtime = Object.fromEntries(
                 event.agents.map((a) => [a.id, { phase: 'waiting', reviewsGiven: 0, reviewsReceived: 0 }]),
             );
             break;
 
-        case 'agent.phase': {
+        case RunEventType.agentPhase: {
             const rt = state.runtime[event.agentId];
             if (rt) rt.phase = event.phase;
             break;
         }
 
-        case 'review.added': {
+        case RunEventType.reviewAdded: {
             // Peer review, never self-review. A backend that sends one is
             // wrong, and silently counting it would hide that.
             if (event.review.byAgentId === event.review.aboutAgentId) return;
@@ -178,26 +142,26 @@ export function applyEvent(state: RunState, event: RunEvent): void {
             break;
         }
 
-        case 'run.status':
+        case RunEventType.status:
             state.status = event.status;
             break;
 
-        case 'leader.note':
+        case RunEventType.leaderNote:
             state.leaderNote = event.text;
             break;
 
-        case 'agent.response':
+        case RunEventType.agentResponse:
             // A failed model must not overwrite the answer it gave in an
             // earlier round with an empty string — that would read as a model
             // which answered nothing rather than one that dropped out.
             if (event.ok && event.text) state.responses[event.agentId] = event.text;
             break;
 
-        case 'run.file':
+        case RunEventType.file:
             state.file = { name: event.name, text: event.text };
             break;
 
-        case 'agent.token':
+        case RunEventType.agentToken:
             // Token text never lands in run state; see the note above.
             break;
     }

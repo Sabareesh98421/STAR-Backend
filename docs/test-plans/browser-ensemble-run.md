@@ -4,11 +4,15 @@ Covers the path from a prompt typed in the UI to a transcript opened as a file
 in the editor:
 
 ```
-TravelingField.submit → httpRunTransport → POST /api/ensemble/run (SSE)
-  → packages/browser-ensemble: draft → review → revise
+TravelingField.submit → openChat → /api/ws/chat/:sessionId (one socket per chat)
+  → ensemble.live.startTurn → packages/browser-ensemble: draft → review → revise
   → dispatch() per round → CDP → chatgpt / claude / gemini tabs
   → RunEvents stream back → useBuffer.open(transcript)
 ```
+
+A run is one TURN of a conversation now. The conversation itself — the socket,
+the session, resuming one — is `docs/test-plans/chat-sessions.md`; what is
+below is the run inside it.
 
 The point of this feature is to find out whether peer review between frontier
 models beats a single model, using the user's own logged-in chat tabs instead
@@ -56,13 +60,14 @@ only assert that the fake calls the callback.
 
 ## Unit — API
 
-Spec: `apps/api/src/modules/ensemble/ensemble.service.spec.ts`
+Spec: `apps/api/src/modules/ensemble/ensemble.service.spec.ts`,
+`ensemble.live.spec.ts`
 
-- `runEnsembleHandler` wraps the logic: a thrown `AppError` becomes a response,
-  never an unhandled rejection
-- an empty or whitespace-only prompt is rejected as a 400 before any browser work
-- a second run while one is in flight returns 409 and does not touch the browser
-  (failure 5)
+- `runTurnHandler` wraps the logic, and takes the emitter: a failure becomes a
+  message rather than an unhandled rejection, and the tests need no transport
+- an empty or whitespace-only prompt is rejected before any browser work
+- a second turn while one is in flight is refused and does not touch the
+  browser (failure 5)
 - the in-flight lock releases after a run that threw, not just after one that
   succeeded — otherwise one failure wedges the endpoint until restart
 - the transcript written to disk records the exact prompt each model received
@@ -70,7 +75,8 @@ Spec: `apps/api/src/modules/ensemble/ensemble.service.spec.ts`
 
 ## Unit — web
 
-Spec: `apps/web/app/domain/run.spec.ts`, `apps/web/app/transport/run.transport.spec.ts`
+Spec: `apps/web/app/domain/run.spec.ts`,
+`apps/web/app/transport/chat.transport.spec.ts`
 
 - `applyEvent` stores an `agent.response` under its agent and leaves the others alone
 - `applyEvent` still refuses a self-review (`byAgentId === aboutAgentId`)
@@ -95,6 +101,51 @@ a missing login is a precondition and not a defect.
 - `onSettled` fires once per model per round, including for a model that
   failed, and a callback that throws does not take the round down
 
+## Unit — stored history
+
+Spec: `apps/api/src/modules/ensemble/*.spec.ts`. Contract:
+`packages/run-protocol/history.ts`.
+
+A run costs minutes of real browser time and cannot be repeated identically, so
+a run that happened but was not recorded is an experiment that has to be run
+again. These protect the record, not the request.
+
+| # | Failure | Why it is invisible |
+|---|---|---|
+| 7 | A failed run leaves no record | The evidence that a model drops out under load is exactly what gets lost |
+| 8 | `sent` prompts dropped to save space | A disagreement between rounds becomes undiagnosable after the fact |
+| 9 | A thread URL stored as `''` rather than `null` | "no thread" and "thread we forgot to record" stop being distinguishable |
+| 10 | `changedModels` computed twice, differently | The list endpoint and the transcript disagree about the result of the experiment |
+
+- a run that failed partway is still readable, with the rounds it completed
+- every round stores the exact prompt each model received
+- thread URLs round-trip, including the null case for a model that failed before
+  producing one
+- `changedModels` from the stored summary matches what the rendered transcript
+  says — one implementation, two callers
+- the list endpoint returns summaries, not transcripts
+- an unknown run id is a 404, not an empty 200
+
+## Unit — the editor
+
+Spec: `apps/web/app/**/*.spec.ts`
+
+The editor is where a finished run is read and edited, so it holds the only copy
+of the thing the user came for.
+
+| # | Failure | Why it is invisible |
+|---|---|---|
+| 11 | Rendered markdown executes embedded HTML | Transcript text is model output: untrusted input rendered into the page |
+| 12 | Gutter numbers drift from logical lines | A wrapped line makes every number below it wrong, and it still looks plausible |
+
+- rendered markdown emits no script tag and no `javascript:` href when fed
+  hostile input (the content is LLM output, which is a trust boundary)
+- gutter numbers correspond to logical lines, not visual rows, so a wrapped
+  line does not shift everything below it
+- editing marks the buffer dirty; adopting still inserts at the right place
+- no horizontal overflow on prose: the editor container's `scrollWidth` does
+  not exceed its `clientWidth`
+
 ## Not covered
 
 - Leader / synthesis. There is no leader yet, so nothing picks between the
@@ -102,3 +153,5 @@ a missing login is a precondition and not a defect.
 - Scoring against a known answer. The API spike grades; this harness only
   produces transcripts for a human to read.
 - Auth on the endpoint, and more than one concurrent run.
+- Continuing a conversation, and the socket that carries it: see
+  `docs/test-plans/chat-sessions.md`.
