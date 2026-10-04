@@ -1,0 +1,62 @@
+#!/bin/sh
+# Commit and push this repo before the machine goes down.
+#
+# Shutdown is not a signal we can catch from a shell - every path to it
+# (`shutdown now`, `systemctl poweroff`, the GUI button, Ctrl+Alt+Del) goes
+# through systemd, which stops units before it kills anything. So the blocker
+# IS a systemd unit: its ExecStop is this script, and systemd waits for it.
+#
+#   ./pre-checks/shutdown-guard install   # once, asks for sudo
+#   ./pre-checks/shutdown-guard           # what systemd runs at shutdown
+#
+# ponytail: commit is guaranteed (local), push is best-effort inside
+# TimeoutStopSec - a laptop shutting down on a dead network still gets the
+# commit. Raise the timeout if your push is slow.
+set -u
+
+repo=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+unit=/etc/systemd/system/shutdown-guard.service
+log="$repo/.git/shutdown-guard.log"
+
+if [ "${1:-}" = "install" ]; then
+    sudo tee "$unit" >/dev/null <<UNIT
+[Unit]
+Description=Commit and push $repo before shutdown
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+User=$(id -un)
+ExecStart=/bin/true
+ExecStop=$repo/pre-checks/shutdown-guard
+TimeoutStopSec=180
+Environment=GIT_SSH_COMMAND=ssh -o BatchMode=yes -o ConnectTimeout=10
+
+[Install]
+WantedBy=multi-user.target
+UNIT
+    sudo systemctl daemon-reload
+    sudo systemctl enable --now shutdown-guard.service
+    echo "installed. test without rebooting:  sudo systemctl stop shutdown-guard"
+    exit 0
+fi
+
+exec >>"$log" 2>&1
+echo "=== $(date -Is) shutdown-guard"
+cd "$repo" || exit 0
+
+branch=$(git symbolic-ref --short -q HEAD) || { echo "detached HEAD, skipped"; exit 0; }
+
+if [ -n "$(git status --porcelain)" ]; then
+    git add -A
+    git commit -m "chore: backup commit" || echo "commit failed"
+fi
+
+if git rev-parse --verify -q "@{upstream}" >/dev/null 2>&1; then
+    git push || echo "push failed - commit is safe locally"
+else
+    git push --set-upstream origin "$branch" || echo "push failed - commit is safe locally"
+fi
+echo "done $(date -Is)"
