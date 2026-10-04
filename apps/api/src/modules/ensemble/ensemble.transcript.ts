@@ -7,28 +7,9 @@
  * the only question the whole harness exists to answer.
  */
 
-/** One model's result inside a round, as `dispatch` reports it. */
-interface RoundResponse {
-    model: string;
-    ok: boolean;
-    text: string;
-    error?: string | null;
-}
+import type { ModelResult, Round, Transcript } from '@star/browser-ensemble/types';
 
-interface Round {
-    kind: string;
-    iteration: number;
-    responses: RoundResponse[];
-}
-
-export interface Transcript {
-    question: string;
-    startedAt: string;
-    finishedAt?: string;
-    models: string[];
-    rounds: Round[];
-    final?: Record<string, string>;
-}
+export type { Transcript };
 
 const HEADING_FOR_ROUND: Record<string, string> = {
     draft: 'Draft',
@@ -41,7 +22,7 @@ const HEADING_FOR_ROUND: Record<string, string> = {
  * models agreeing and two models agreeing are different evidence, and a blank
  * section silently turns one into the other.
  */
-function answer(r: RoundResponse): string {
+function answer(r: ModelResult): string {
     if (r.ok && r.text) return r.text;
     return `_no answer — ${r.error ?? 'unknown failure'}_`;
 }
@@ -56,19 +37,44 @@ function roundSection(round: Round): string[] {
     ];
 }
 
+/** What a run actually found: how many models answered, and which ones moved. */
+export interface Outcome {
+    readonly answered: number;
+    /** Models whose revised answer differs from their draft. */
+    readonly changed: readonly string[];
+}
+
+/**
+ * The result of the experiment, computed once.
+ *
+ * Both the markdown verdict below and the stored run summary need this, and two
+ * implementations of it would let the list endpoint and the transcript disagree
+ * about what a run found — a contradiction with no error on either side.
+ *
+ * A run with no draft round (one that died before the first answer) answered
+ * nothing and changed nothing, which is the honest reading of it.
+ */
+export function outcome(t: Transcript): Outcome {
+    const draft = t.rounds.find((r) => r.kind === 'draft') ?? null;
+    if (!draft) return { answered: 0, changed: [] };
+
+    const answered = draft.responses.filter((r) => r.ok && r.text);
+    return {
+        answered: answered.length,
+        changed: answered
+            .filter((r) => t.final[r.model] && t.final[r.model] !== r.text)
+            .map((r) => r.model),
+    };
+}
+
 /**
  * Whether revise actually changed anything is the result of the experiment, so
  * it is stated at the top rather than left for the reader to diff by eye.
  */
 function verdict(t: Transcript): string[] {
-    const draft = t.rounds.find((r) => r.kind === 'draft');
-    if (!draft || !t.final) return [];
+    if (!t.rounds.some((r) => r.kind === 'draft')) return [];
 
-    const changed = draft.responses
-        .filter((r) => r.ok && r.text && t.final![r.model] && t.final![r.model] !== r.text)
-        .map((r) => r.model);
-    const answered = draft.responses.filter((r) => r.ok && r.text).length;
-
+    const { answered, changed } = outcome(t);
     return [
         `- models answered: ${answered} of ${t.models.length}`,
         `- changed after review: ${changed.length ? changed.join(', ') : 'none'}`,
