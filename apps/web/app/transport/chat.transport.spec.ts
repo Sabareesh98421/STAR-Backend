@@ -112,6 +112,7 @@ test('a drop mid-run reconnects, and resumes from the last seq applied', async (
         onLink: (state) => link.push(state),
         cursor: () => cursor,
         factory,
+        retryMs: 10,
     });
 
     sockets[0]!.accept();
@@ -123,7 +124,7 @@ test('a drop mid-run reconnects, and resumes from the last seq applied', async (
 
     // The transport waits before retrying, so this waits with it rather than
     // reaching inside for the timer.
-    await new Promise((resolve) => setTimeout(resolve, 1_800));
+    await new Promise((resolve) => setTimeout(resolve, 30));
 
     // Resumed, not restarted: the run outlived this socket, and `since` is
     // what keeps the client from re-applying what it already has.
@@ -155,10 +156,7 @@ test('a frame arriving after a deliberate close is not applied', () => {
 });
 
 test('a question asked after the retries are exhausted is refused, not swallowed', async () => {
-    // Five reconnects at the transport's own backoff. Waited out rather than
-    // injected: the bug is in the state the real schedule leaves behind.
-    test.setTimeout(30_000);
-
+    // Five reconnects at the transport's configured backoff.
     const link: string[] = [];
     const chat = openChat({
         wsBase: 'ws://x/ws',
@@ -167,12 +165,13 @@ test('a question asked after the retries are exhausted is refused, not swallowed
         onLink: (state) => link.push(state),
         cursor: () => 0,
         factory,
+        retryMs: 10,
     });
 
     for (let i = 0; i < 6; i++) {
         sockets.at(-1)!.drop();
         if (link.at(-1) === 'offline') break;
-        await new Promise((resolve) => setTimeout(resolve, 1_800));
+        await new Promise((resolve) => setTimeout(resolve, 30));
     }
 
     expect(link.at(-1)).toBe('offline');
@@ -192,6 +191,7 @@ test('resync reconnects and asks for the replay from the cursor', async () => {
         onLink: (state) => link.push(state),
         cursor: () => cursor,
         factory,
+        retryMs: 10,
     });
 
     sockets[0]!.accept();
@@ -201,7 +201,7 @@ test('resync reconnects and asks for the replay from the cursor', async () => {
     // What a caller does on a hole in the sequence: seq 5 arrived after 2, so
     // 3 and 4 never got out of the server and only a replay can produce them.
     chat.resync();
-    await new Promise((resolve) => setTimeout(resolve, 1_800));
+    await new Promise((resolve) => setTimeout(resolve, 30));
 
     expect(sockets).toHaveLength(2);
     expect(sockets[1]!.url).toContain('since=2');
@@ -222,12 +222,13 @@ test('a deliberate close does not reconnect', async () => {
         onLink: (state) => link.push(state),
         cursor: () => 0,
         factory,
+        retryMs: 10,
     });
 
     sockets[0]!.accept();
     chat.close();
 
-    await new Promise((resolve) => setTimeout(resolve, 1_800));
+    await new Promise((resolve) => setTimeout(resolve, 30));
 
     // Cancelling or switching conversations must not leave a socket that keeps
     // coming back, which is the leak that only shows up as traffic hours later.
