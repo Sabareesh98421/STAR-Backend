@@ -1,0 +1,39 @@
+name: Kodus LiteLLM Code Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  kodus-review:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install Kodus CLI
+        run: bun add -g @kodus/cli
+
+      - name: Run Kodus review via LiteLLM
+        env:
+          OPENAI_BASE_URL: ${{ secrets.LITELLM_BASE_URL || 'http://127.0.0.1:4000/v1' }}
+          OPENAI_API_KEY: ${{ secrets.LITELLM_API_KEY }}
+          KODUS_MODEL: ${{ vars.LITELLM_MODEL || 'litellm/default' }}
+          KODUS_GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            kodus review --branch "origin/${{ github.base_ref }}" --format markdown --output kodus-review.md --fail-on error
+          else
+            kodus review --commit HEAD --format markdown --output kodus-review.md --fail-on error
+          fi
