@@ -15,8 +15,26 @@ model User {
   passwordHash String   @map("password_hash")
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
+  freeTrial    FreeTrial?
+  chatSessions ChatSession[]
 
   @@map("users")
+}
+
+/// A guest or account-scoped free-trial allowance. `locator` is only a lookup
+/// key: account trials are always resolved through the authenticated user id.
+model FreeTrial {
+  id           String   @id @default(uuid())
+  locator      String   @unique
+  userId       String?  @unique @map("user_id")
+  promptsUsed  Int      @default(0) @map("prompts_used")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  user     User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessions ChatSession[]
+
+  @@map("free_trials")
 }
 
 /// One conversation. A session is an ordered list of turns, and a turn is one
@@ -36,9 +54,16 @@ model ChatSession {
   /// by when a conversation was first opened.
   updatedAt DateTime @updatedAt @map("updated_at")
 
+  ownerUserId String? @map("owner_user_id")
+  owner       User?   @relation(fields: [ownerUserId], references: [id], onDelete: Cascade)
+  freeTrialId String? @map("free_trial_id")
+  freeTrial   FreeTrial? @relation(fields: [freeTrialId], references: [id], onDelete: Cascade)
+
   runs EnsembleRun[]
 
   @@index([updatedAt])
+  @@index([ownerUserId, updatedAt])
+  @@index([freeTrialId, updatedAt])
   @@map("chat_sessions")
 }
 
