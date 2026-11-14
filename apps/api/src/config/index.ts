@@ -9,3 +9,6 @@ export { serverConfig } from './server.config';
 export { loggerConfig } from './logger.config';
 export { passwordConfig } from './password.config';
 export { ensembleConfig } from './ensemble.config';
+export { sessionConfig } from './session.config';
+export { getInsiderPlan, promptLimitForPlan, resolveInsiderPlan, insidersSchema } from './insider.config';
+export type { InsiderEntry } from './insider.config';
