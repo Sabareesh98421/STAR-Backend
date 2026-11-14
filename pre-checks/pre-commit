@@ -11,3 +11,5 @@ case "$email" in
     exit 1
     ;;
 esac
+
+exec "$(git rev-parse --show-toplevel)/pre-checks/kodus-review" pre-commit
