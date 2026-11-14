@@ -110,6 +110,7 @@ export interface ChatOptions {
      */
     readonly cursor: () => number;
     readonly factory?: SocketFactory;
+    readonly retryMs?: number | null;
 }
 
 /** Long enough not to hammer a server that is down, short enough to feel live. */
@@ -198,7 +199,7 @@ export function openChat(options: ChatOptions): ChatConnection {
             // real chat tabs — so reconnecting is how the client catches up,
             // not a way of restarting anything.
             options.onLink('reconnecting');
-            timer = setTimeout(connect, RETRY_MS);
+            timer = setTimeout(connect, options.retryMs ?? RETRY_MS);
         };
 
         // A WebSocket always closes after an error, so the handling is there.
