@@ -9,8 +9,16 @@ signup.
 
 ## Cases
 
+- Signup success links to `/verify` with the signup email prefilled; the user can
+  request/resend an OTP, submit it, and reach signin after successful verification.
+- OTP request errors, including the resend cooldown, are shown without losing
+  the entered email or code.
 - Sign up with a new email -> succeeds; no Postgres user row exists yet, a
   pending signup exists in Redis for that email.
+- Submit signup with `secondName: null` or with `secondName` omitted -> both are
+  accepted and normalized to a nullable database value.
+- Sign up again for an email that already has a pending signup -> rejected
+  without replacing the name or password associated with the verification OTP.
 - Request an OTP for an email with no pending signup -> rejected (not found),
   no OTP is generated or sent.
 - Request an OTP for a signed-up email -> succeeds as before.
