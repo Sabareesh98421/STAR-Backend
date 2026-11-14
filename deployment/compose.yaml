@@ -1,0 +1,67 @@
+services:
+  api:
+    image: ${API_IMAGE:?Set API_IMAGE to the immutable application image}
+    container_name: star-api
+    restart: unless-stopped
+    init: true
+    stop_grace_period: 10m
+    expose:
+      - "3000"
+    environment:
+      NODE_ENV: production
+      API_PORT: "3000"
+      WEB_DIST: /app/apps/web/.output/public
+      WEB_ORIGINS: https://${PUBLIC_HOST:?Set PUBLIC_HOST to the public DNS name}
+      DATABASE_URL: ${DATABASE_URL:?Set DATABASE_URL to the managed PostgreSQL URL}
+      REDIS_HOST: ${REDIS_HOST:?Set REDIS_HOST to the managed Redis host}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      REDIS_DB: ${REDIS_DB:-0}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?Set REDIS_PASSWORD}
+      SESSION_COOKIE_NAME: ${SESSION_COOKIE_NAME:-sid}
+      SMTP_HOST: ${SMTP_HOST:?Set SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_SECURE: ${SMTP_SECURE:-false}
+      SMTP_USER: ${SMTP_USER:?Set SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS:?Set SMTP_PASS}
+      MAIL_FROM: ${MAIL_FROM:?Set MAIL_FROM}
+      MAIL_USE_TEST_TRANSPORT: "false"
+      ENSEMBLE_CDP_URL: ${ENSEMBLE_CDP_URL:?Set the private Chrome CDP endpoint}
+      ENSEMBLE_RUNS_DIR: /var/lib/star/runs
+    volumes:
+      - run_files:/var/lib/star/runs
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "5"
+    deploy:
+      replicas: 1
+
+  edge:
+    image: caddy:2.10.2-alpine
+    restart: unless-stopped
+    depends_on:
+      - api
+    command:
+      - reverse-proxy
+      - --from
+      - ${PUBLIC_HOST:?Set PUBLIC_HOST to the public DNS name}
+      - --to
+      - api:3000
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "5"
+
+volumes:
+  caddy_data:
+  caddy_config:
+  run_files:
