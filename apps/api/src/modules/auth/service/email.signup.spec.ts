@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { connectRedis, disconnectRedis, getRedis } from "@/infrastructure/redis";
 import signupService from "./email.signup";
-import { getPendingSignup, pendingSignupKey } from "./email.signup.store";
+import { deletePendingSignup, getPendingSignup, pendingSignupKey } from "./email.signup.store";
 import type { EmailSignupRequest } from "@/modules/auth/providers/email";
 
 const email = "email-signup-test@example.com";
@@ -22,6 +22,10 @@ test.describe("email.signup", () => {
         await connectRedis();
     });
 
+    test.beforeEach(async () => {
+        await deletePendingSignup(email);
+    });
+
     test.afterAll(async () => {
         await getRedis().del(pendingSignupKey(email));
         await disconnectRedis();
@@ -35,5 +39,20 @@ test.describe("email.signup", () => {
         expect(pending?.firstName).toBe("Ada");
         expect(pending?.secondName).toBe("Lovelace");
         expect(pending?.passwordHash).not.toBe("Str0ng!Pass");
+    });
+
+    test("rejects a second signup without replacing the credentials awaiting verification", async () => {
+        const first = await signupService(signupBody());
+        const duplicate = await signupService(
+            signupBody({
+                firstName: "Replacement",
+                password: "Other-Password-27!",
+                confirmPassword: "Other-Password-27!",
+            }),
+        );
+
+        expect(first.status).toBe(201);
+        expect(duplicate.status).toBe(409);
+        expect((await getPendingSignup(email))?.firstName).toBe("Ada");
     });
 });
