@@ -28,7 +28,7 @@ export const TARGETS: readonly Target[] = [
         name: 'chatgpt',
         match: /chatgpt\.com/,
         newChat: 'https://chatgpt.com/',
-        composer: '#prompt-textarea',
+        composer: '#prompt-textarea, [contenteditable="true"], [role="textbox"]',
         response: '[data-message-author-role="assistant"]',
     },
     {
@@ -61,9 +61,17 @@ export async function pageFor(ctx: BrowserContext, target: Target): Promise<Page
 // Each tab is one conversation, so a round that should be stateless (the API
 // spike's semantics) needs a fresh thread — otherwise a model reviewing peers
 // also sees its own earlier draft in context and the comparison is contaminated.
-export async function newChat(page: Page, target: Target, timeoutMs = 30_000): Promise<void> {
-    await page.goto(target.newChat, { waitUntil: 'domcontentloaded' });
-    await page.locator(target.composer).waitFor({ state: 'visible', timeout: timeoutMs });
+export async function newChat(page: Page, target: Target, timeoutMs = 15_000): Promise<void> {
+    const isAtNewChat = page.url() === target.newChat;
+    const responseCount = await page.locator(target.response).count().catch(() => 0);
+    const composer = page.locator(target.composer);
+    const isComposerVisible = await composer.isVisible().catch(() => false);
+
+    // If not already on the clean target URL with an empty thread and visible composer, navigate.
+    if (!isAtNewChat || responseCount > 0 || !isComposerVisible) {
+        await page.goto(target.newChat, { waitUntil: 'domcontentloaded' });
+        await composer.waitFor({ state: 'visible', timeout: timeoutMs });
+    }
 
     // A fresh thread has to be genuinely EMPTY before we send. These are SPAs:
     // the previous conversation stays mounted for a beat after navigation, and
@@ -72,7 +80,7 @@ export async function newChat(page: Page, target: Target, timeoutMs = 30_000): P
     const started = Date.now();
     while (Date.now() - started < timeoutMs) {
         if ((await page.locator(target.response).count()) === 0) return;
-        await page.waitForTimeout(250);
+        await page.waitForTimeout(200);
     }
     throw new Error(`${target.name}: previous conversation did not clear on ${target.newChat}`);
 }
@@ -104,19 +112,28 @@ export const collapseRepeats = (s: string): string =>
  * thread, so a stale response can appear as the first and only element — count
  * says "fresh answer", content says otherwise. Content is the one that's right.
  */
+export const DEFAULT_TIMEOUT_MS = 60_000;
+export const FIRST_RESPONSE_TIMEOUT_MS = 25_000;
+
 export async function readWhenSettled(
     page: Page,
     target: Target,
-    { before, stale = [], settleMs = 1500, timeoutMs = 180_000 }: Partial<ReadOptions> & Pick<ReadOptions, 'before'>,
+    { before, stale = [], settleMs = 1500, timeoutMs = DEFAULT_TIMEOUT_MS }: Partial<ReadOptions> & Pick<ReadOptions, 'before'>,
 ): Promise<ReadResult> {
     const started = Date.now();
     const last = page.locator(target.response).last();
     let text = '';
     let stableSince: number | null = null;
+    const firstResponseDeadline = Math.min(timeoutMs, FIRST_RESPONSE_TIMEOUT_MS);
 
     while (Date.now() - started < timeoutMs) {
         await page.waitForTimeout(400);
-        if ((await page.locator(target.response).count()) <= before) continue;
+        if ((await page.locator(target.response).count()) <= before) {
+            if (Date.now() - started >= firstResponseDeadline) {
+                return { text: '', ms: Date.now() - started, providerError: false, timedOut: true };
+            }
+            continue;
+        }
 
         // Raw: quiescence only asks whether the text CHANGED. Collapsing here
         // re-split the whole growing answer ~450 times a round to decide one
@@ -207,7 +224,6 @@ export async function dispatch(
             await page.waitForTimeout(attempt * 3000);
             await newChat(page, target);
             const composer = page.locator(target.composer);
-            await composer.waitFor({ state: 'visible', timeout: 30_000 });
             await composer.click();
             await composer.fill(promptFor(target.name));
             await page.keyboard.press('Enter');
@@ -220,9 +236,12 @@ export async function dispatch(
         const prepared = await Promise.allSettled(
             TARGETS.map(async (target): Promise<Prepared> => {
                 const page = await pageFor(ctx, target);
-                if (fresh) await newChat(page, target);
                 const composer = page.locator(target.composer);
-                await composer.waitFor({ state: 'visible', timeout: 30_000 });
+                if (fresh) {
+                    await newChat(page, target);
+                } else {
+                    await composer.waitFor({ state: 'visible', timeout: 15_000 });
+                }
                 const before = await page.locator(target.response).count();
                 // Whatever is on screen now, plus everything this model said in
                 // earlier rounds. Captured unconditionally: on a fresh thread the

@@ -81,3 +81,10 @@ test('ignores responses that were present before the prompt was sent', async () 
     });
     expect(r).toMatchObject({ text: '', timedOut: true });
 });
+
+test('fails fast when no response element appears within first response deadline', async () => {
+    const r = await readWhenSettled(asPage([]), target, {
+        before: 0, settleMs: 0, timeoutMs: 300,
+    });
+    expect(r).toMatchObject({ text: '', timedOut: true });
+});
