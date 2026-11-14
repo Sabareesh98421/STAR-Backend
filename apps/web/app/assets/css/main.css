@@ -10,7 +10,7 @@
  * Tailwind's default scale at 1 2 3 4 6 8 12.
  */
 
-@theme {
+@theme static {
     /* Ink is one colour at many alphas over the surface, never a set of greys.
        --ink-rgb flips per theme below and every step follows it. */
     --color-ink-85: rgba(var(--ink-rgb), 0.85);
@@ -34,8 +34,10 @@
     --color-accent-40: var(--accent-a40);
     --color-accent-18: var(--accent-a18);
 
-    --font-sans: 'IBM Plex Sans', system-ui, sans-serif;
-    --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+    --font-sans: 'Nunito', 'Ubuntu', 'Quicksand', sans-serif;
+    --font-display: 'Fredoka', 'Nunito', 'Ubuntu', 'Quicksand', sans-serif;
+    --font-error: 'Lobster Two', 'Nunito', 'Ubuntu', 'Quicksand', sans-serif;
+    --font-mono: 'Source Code Pro', ui-monospace, monospace;
 
     --text-10: 10px;
     --text-11: 11px;

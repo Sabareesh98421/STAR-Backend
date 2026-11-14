@@ -26,8 +26,12 @@ export default defineNuxtConfig({
     modules: ['@nuxt/ui'],
     fonts: {
         families: [
-            { name: 'IBM Plex Sans', provider: 'google', weights: [400, 500, 600] },
-            { name: 'IBM Plex Mono', provider: 'google', weights: [400, 500] },
+            { name: 'Nunito', provider: 'google', weights: [200, 300, 400, 500, 600, 700, 800, 900, 1000] },
+            { name: 'Fredoka', provider: 'google', weights: [300, 400, 500, 600, 700] },
+            { name: 'Ubuntu', provider: 'google', weights: [300, 400, 500, 700] },
+            { name: 'Quicksand', provider: 'google', weights: [300, 400, 500, 600, 700] },
+            { name: 'Lobster Two', provider: 'google', weights: [400, 700] },
+            { name: 'Source Code Pro', provider: 'google', weights: [200, 300, 400, 500, 600, 700, 800, 900] },
         ],
     },
 
