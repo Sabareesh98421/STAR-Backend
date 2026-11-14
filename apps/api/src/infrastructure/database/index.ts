@@ -16,7 +16,7 @@ export { connectDatabase, disconnectDatabase, getDb } from "./client";
 export type { CreateUserInput, IUserRepository, UserRecord } from "./repositories/user.repository";
 export { PrismaUserRepository } from "./repositories/user.repository.prisma";
 
-export type { IEnsembleRunRepository, SaveRunInput, SessionTurn } from "./repositories/ensemble.run.repository";
+export type { IEnsembleRunRepository, SaveRunInput, SessionAccess, SessionTurn } from "./repositories/ensemble.run.repository";
 export { PrismaEnsembleRunRepository } from "./repositories/ensemble.run.repository.prisma";
 
 import type { IUserRepository } from "./repositories/user.repository";
