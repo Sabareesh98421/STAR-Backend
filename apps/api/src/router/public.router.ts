@@ -1,0 +1,1 @@
+export { publicAuthRouter as default } from '@/modules/auth/routes';

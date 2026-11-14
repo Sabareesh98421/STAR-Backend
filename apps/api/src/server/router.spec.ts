@@ -9,10 +9,17 @@
 //
 // Needs a server, because the mapping only exists inside Elysia's lifecycle.
 import { test, expect } from '@playwright/test';
-import type { Elysia } from 'elysia';
 
-let app: Elysia;
+interface TestServer {
+    stop(force?: boolean): Promise<unknown>;
+    server: { port: number | undefined } | null;
+}
+
+let app: TestServer;
 let base = '';
+let authCookie = '';
+let authSessionId = '';
+let disconnectRedis: () => Promise<void>;
 
 test.beforeAll(async () => {
     // Nothing here runs an ensemble, but a worker process shared with another
@@ -21,13 +28,26 @@ test.beforeAll(async () => {
     process.env.ENSEMBLE_CDP_URL = 'http://127.0.0.1:1';
 
     const { Elysia } = await import('elysia');
-    const masterRouter = (await import('./router')).default;
-    app = new Elysia().use(masterRouter).listen({ port: 0, reusePort: false });
+    const serverRouter = (await import('./router')).default;
+    app = new Elysia().use(serverRouter).listen({ port: 0, reusePort: false });
     base = `http://127.0.0.1:${app.server?.port ?? 0}/api`;
+
+    const redis = await import('@/infrastructure/redis');
+    await redis.connectRedis();
+    disconnectRedis = redis.disconnectRedis;
+    const sessionStore = await import('@/modules/auth/service/session');
+    const { sessionConfig } = await import('@/config');
+    authSessionId = await sessionStore.createSession('spec-router-user', 'router-spec@example.test');
+    authCookie = `${sessionConfig.cookieName}=${authSessionId}`;
 });
 
 test.afterAll(async () => {
     await app?.stop(true);
+    if (authSessionId) {
+        const sessionStore = await import('@/modules/auth/service/session');
+        await sessionStore.deleteSession(authSessionId);
+    }
+    await disconnectRedis?.();
 });
 
 interface Failure {
@@ -36,10 +56,35 @@ interface Failure {
     error: { code: string; details?: Record<string, string[]> };
 }
 
+const privateHeaders = (contentType: string | null = null) => ({
+    cookie: authCookie,
+    ...(contentType === null ? {} : { 'content-type': contentType }),
+});
+
+test('private routes reject requests without a session while public auth stays reachable', async () => {
+    const privateResponse = await fetch(`${base}/ensemble/sessions`);
+    expect(privateResponse.status).toBe(401);
+
+    const privateAuthResponse = await fetch(`${base}/auth/email/me`);
+    expect(privateAuthResponse.status).toBe(401);
+
+    const authenticatedAuthResponse = await fetch(`${base}/auth/email/me`, {
+        headers: privateHeaders(),
+    });
+    expect(authenticatedAuthResponse.status).toBe(200);
+
+    const publicResponse = await fetch(`${base}/auth/email/signup`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({}),
+    });
+    expect(publicResponse.status).toBe(400);
+});
+
 test('an invalid body is a 400 in the project envelope, naming the field', async () => {
     const res = await fetch(`${base}/ensemble/sessions`, {
         method: 'POST',
-        headers: { 'content-type': 'application/json' },
+        headers: privateHeaders('application/json'),
         body: JSON.stringify({}),
     });
 
@@ -59,7 +104,7 @@ test('an invalid body is a 400 in the project envelope, naming the field', async
 test('a prompt of only whitespace is refused rather than trimmed to nothing', async () => {
     const res = await fetch(`${base}/ensemble/sessions`, {
         method: 'POST',
-        headers: { 'content-type': 'application/json' },
+        headers: privateHeaders('application/json'),
         body: JSON.stringify({ title: '   ' }),
     });
 
@@ -69,7 +114,7 @@ test('a prompt of only whitespace is refused rather than trimmed to nothing', as
 });
 
 test('an invalid query is a 400, not a listing of everything', async () => {
-    const res = await fetch(`${base}/ensemble/sessions?limit=abc`);
+    const res = await fetch(`${base}/ensemble/sessions?limit=abc`, { headers: privateHeaders() });
     expect(res.status).toBe(400);
 
     const body = (await res.json()) as Failure;
@@ -77,7 +122,7 @@ test('an invalid query is a 400, not a listing of everything', async () => {
 });
 
 test('an id that is not a uuid never reaches the database', async () => {
-    const res = await fetch(`${base}/ensemble/runs/not-a-uuid`);
+    const res = await fetch(`${base}/ensemble/runs/not-a-uuid`, { headers: privateHeaders() });
     // A 500 here would be Prisma's complaint about the shape of an id the
     // router should have rejected.
     expect(res.status).toBe(400);
@@ -86,7 +131,7 @@ test('an id that is not a uuid never reaches the database', async () => {
 test('malformed JSON is a 400 as well, since the client sent it', async () => {
     const res = await fetch(`${base}/ensemble/sessions`, {
         method: 'POST',
-        headers: { 'content-type': 'application/json' },
+        headers: privateHeaders('application/json'),
         body: '{not json',
     });
 

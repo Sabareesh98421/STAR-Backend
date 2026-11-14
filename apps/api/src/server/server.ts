@@ -1,5 +1,5 @@
 import {Elysia} from 'elysia';
-import masterRouter from './router';
+import serverRouter from './router';
 import { webRoutes } from './web';
 import { connectDatabase, disconnectDatabase } from '@/infrastructure/database';
 import { connectRedis, disconnectRedis } from '@/infrastructure/redis';
@@ -29,7 +29,7 @@ const web = await webRoutes();
 // The web wildcard goes on LAST: it answers anything the API did not, and
 // mounted first it would swallow routes that have a real handler. A fresh
 // instance per attempt, so a half-bound one is never retried.
-const buildApp = () => new Elysia().use(masterRouter).use(web);
+const buildApp = () => new Elysia().use(serverRouter).use(web);
 
 function startServer(port: number, attemptsLeft: number): ReturnType<typeof buildApp> {
     try {
