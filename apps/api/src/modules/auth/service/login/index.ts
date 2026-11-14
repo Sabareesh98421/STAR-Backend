@@ -1,1 +1,1 @@
-export { default as signInHandler } from './email.signin';
+export { signInHandler, type SessionCookieSetter } from './email.signin';
