@@ -13,9 +13,17 @@ import {
     sessionCreateSchema,
     sessionListQuerySchema,
 } from './ensemble.schema';
+import { sessionMiddleware } from '@/server/middleware/session';
+import { UnauthorizedError } from '@/shared/errors';
+import type { SessionAccess } from '@/infrastructure/database';
 
 const routerConfig = {
     prefix: '/ensemble',
+};
+
+const accessFor = (user: { id: string } | null): SessionAccess => {
+    if (!user) throw new UnauthorizedError();
+    return { ownerUserId: user.id, freeTrialId: null };
 };
 
 /**
@@ -29,17 +37,18 @@ const routerConfig = {
  * built from.
  */
 const ensembleRouter = new Elysia(routerConfig)
-    .post('/sessions', ({ body }) => createSessionHandler(body), { body: sessionCreateSchema })
-    .get('/sessions', ({ query }) => listSessionsHandler(query), { query: sessionListQuerySchema })
+    .use(sessionMiddleware)
+    .post('/sessions', ({ body, user }) => createSessionHandler(body, accessFor(user)), { body: sessionCreateSchema })
+    .get('/sessions', ({ query, user }) => listSessionsHandler(query, accessFor(user)), { query: sessionListQuerySchema })
     // The conversation, resumed: its turns, oldest first. A turn's transcript
     // is fetched per turn below — twelve of them is hundreds of kilobytes of
     // markdown nobody has asked to read yet.
-    .get('/sessions/:id', ({ params }) => getSessionHandler(params), { params: idParamsSchema })
-    .get('/runs', ({ query }) => listRunsHandler(query), { query: runListQuerySchema })
+    .get('/sessions/:id', ({ params, user }) => getSessionHandler(params, accessFor(user)), { params: idParamsSchema })
+    .get('/runs', ({ query, user }) => listRunsHandler(query, accessFor(user)), { query: runListQuerySchema })
     // `?rounds=1` for the prompts and answers behind the transcript. Off by
     // default: the client that opens a turn reads the rendered file and nothing
     // else, and the rounds are that same text over again several times.
-    .get('/runs/:id', ({ params, query }) => getRunHandler(params, query), {
+    .get('/runs/:id', ({ params, query, user }) => getRunHandler(params, query, accessFor(user)), {
         params: idParamsSchema,
         query: runDetailQuerySchema,
     });
