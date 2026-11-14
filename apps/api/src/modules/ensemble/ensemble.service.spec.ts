@@ -51,6 +51,7 @@ test.beforeAll(async () => {
  * symptom was a turn that had been written and then vanished.
  */
 const MINE = 'spec:service ';
+const ACCESS = { ownerUserId: null, freeTrialId: null } as const;
 
 test.afterAll(async () => {
     if (!dbReady) return;
@@ -63,7 +64,7 @@ const PROMPT = 'spec: why is evict slow?';
 
 /** A turn needs a conversation to be filed under; this makes a throwaway one. */
 const session = async (title = `${MINE}turn`) =>
-    (await db.ensembleRunRepository.createSession(title)).id;
+    (await db.ensembleRunRepository.createSession(title, ACCESS)).id;
 
 /** Drives one turn to completion and hands back everything it said. */
 async function drive(sessionId: string, prompt = PROMPT): Promise<ChatServerPayload[]> {
@@ -103,7 +104,7 @@ test('a turn that failed partway is still recorded, under the session that asked
     const sessionId = await session();
     await drive(sessionId, prompt);
 
-    const stored = await db.ensembleRunRepository.findSession(sessionId);
+    const stored = await db.ensembleRunRepository.findSession(sessionId, ACCESS);
     const turn = stored?.turns.find((t) => t.question === prompt) ?? null;
 
     // The evidence that a model drops out under load is exactly the evidence
