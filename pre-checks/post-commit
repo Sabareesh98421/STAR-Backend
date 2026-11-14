@@ -1,2 +1,3 @@
 #!/bin/sh
+"$(git rev-parse --show-toplevel)/pre-checks/kodus-review" post-commit
 exec "$(git rev-parse --show-toplevel)/pre-checks/sync-main"

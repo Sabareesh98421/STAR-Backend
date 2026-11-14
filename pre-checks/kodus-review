@@ -1,0 +1,30 @@
+#!/bin/sh
+# Runs Kodus CLI review on pre-commit (staged diff) or post-commit (HEAD commit)
+# routed through the local LiteLLM proxy. Skips when KODUS_SKIP=1 or kodus is
+# not installed so commits never break on a missing local binary.
+set -u
+
+[ "${KODUS_SKIP:-0}" = "1" ] && exit 0
+command -v kodus >/dev/null 2>&1 || exit 0
+
+export OPENAI_BASE_URL="${LITELLM_BASE_URL:-http://127.0.0.1:4000/v1}"
+export KODUS_MODEL="${LITELLM_MODEL:-litellm/default}"
+
+stage="${1:-pre-commit}"
+
+case "$stage" in
+pre-commit)
+    git diff --cached --quiet && exit 0
+    exec kodus review --staged --fast --fail-on error
+    ;;
+post-commit)
+    # Run non-blocking in the background after commit so the commit returns
+    # immediately while logging the post-commit review under .cache/kodus/.
+    root="$(git rev-parse --show-toplevel)"
+    mkdir -p "$root/.cache/kodus"
+    sha="$(git rev-parse --short HEAD)"
+    nohup kodus review --commit HEAD --format markdown \
+        --output "$root/.cache/kodus/post-commit-$sha.md" \
+        >/dev/null 2>&1 &
+    ;;
+esac
