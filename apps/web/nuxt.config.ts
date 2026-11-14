@@ -1,3 +1,5 @@
+import { envPort } from './dev-env';
+
 export default defineNuxtConfig({
     compatibilityDate: '2026-09-07',
 
@@ -5,8 +7,17 @@ export default defineNuxtConfig({
     // database or a vendor SDK; every byte arrives over the transport layer.
     runtimeConfig: {
         public: {
-            apiBase: process.env.NUXT_PUBLIC_API_BASE ?? 'http://localhost:3000/api',
-            wsBase: process.env.NUXT_PUBLIC_WS_BASE ?? 'ws://localhost:3000/ws',
+            // Relative, because the API and this app share ONE origin: the
+            // dev proxy below in development, the API serving the built app in
+            // production. Nothing here knows a port, so nothing here can drift
+            // out of sync with one.
+            apiBase: process.env.NUXT_PUBLIC_API_BASE ?? '/api',
+            // Under /api, where the socket is actually mounted: the chat
+            // socket is part of the same router as every other route, and a
+            // base that skipped the prefix 404s at the handshake. A relative
+            // WebSocket URL resolves against the page and http:// becomes
+            // ws://, so this needs no scheme of its own.
+            wsBase: process.env.NUXT_PUBLIC_WS_BASE ?? '/api/ws',
         },
     },
 
@@ -22,12 +33,31 @@ export default defineNuxtConfig({
 
     css: ['~/assets/css/main.css'],
 
-    // 3000 belongs to the Elysia API; the two run side by side in dev.
-    devServer: { port: 3001 },
+    // The HMR workflow. Not how the app ships — the API serves the built SPA
+    // and is the only server there — but while working on the front end this
+    // gives hot reload, and everything under /api is proxied to the API so the
+    // page still sees ONE origin and the relative bases above keep working.
+    //
+    // Ports come from the monorepo's single .env, which Bun loads before this
+    // process starts; the defaults match the API's own defaults.
+    devServer: { port: envPort('WEB_PORT', 3001) },
+    nitro: {
+        // HTTP only. devProxy cannot carry a WebSocket upgrade whatever it is
+        // passed — Nitro's dev server hands upgrades straight to its own
+        // worker without consulting devProxy — and a chat run IS a WebSocket,
+        // so that half lives in modules/dev-ws-proxy.ts.
+        devProxy: {
+            '/api': { target: `http://localhost:${envPort('API_PORT', 3000)}/api` },
+        },
+    },
 
     typescript: { strict: true },
 
-    // A run is live, per-user, and streamed. There is nothing to prerender and
-    // nothing to cache at the edge, so the client owns the whole surface.
+    // Load-bearing, not a default left alone. `ssr: false` + `nuxt generate`
+    // emits a static SPA that the Elysia API serves itself, which is the whole
+    // reason this monorepo runs as ONE server. Turning SSR on means rendering
+    // per request, which means Nitro running as a second (Node) server beside
+    // the API — the thing we removed. A run is live, per-user and streamed, so
+    // there is nothing to prerender anyway.
     ssr: false,
 })

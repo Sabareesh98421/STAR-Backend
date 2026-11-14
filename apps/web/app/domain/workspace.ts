@@ -73,7 +73,7 @@ export interface Review {
 export type ShellLayer = 'rest' | 'spotlight' | 'console';
 
 /** Sheet C: "files unprefixed · everything else x:y". */
-export type SpotlightPrefix = 'fs' | 'cmd';
+export type SpotlightPrefix = 'fs' | 'cmd' | 'history';
 
 export const RESERVED_PREFIXES = ['sym:', 'ext:', 'agent:'] as const;
 

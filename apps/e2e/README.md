@@ -15,20 +15,24 @@ transport — so the two are comparable.
 | file | role |
 |---|---|
 | `shared_browser/` | submodule — the persistent logged-in Chromium profile, CDP on :9222 |
-| `broadcast.mjs` | **transport**: deliver a prompt to N tabs simultaneously, collect answers |
-| `ensemble.mjs` | **protocol**: draft → cross-review → revise rounds, writes a transcript |
+| `../../packages/browser-ensemble/chrome.ts` | starts Chrome on :9222 on demand, or reuses one already there |
+| `../../packages/browser-ensemble/broadcast.ts` | **transport**: deliver a prompt to N tabs simultaneously, collect answers |
+| `../../packages/browser-ensemble/ensemble.ts` | **protocol**: draft → cross-review → revise rounds, writes a transcript |
 | `show.mjs` | read a transcript back |
 | `tests/` | Playwright specs |
 
-`broadcast.mjs` knows nothing about rounds. `ensemble.mjs` knows nothing about
+`broadcast.ts` knows nothing about rounds. `ensemble.ts` knows nothing about
 selectors. Adding a 4th model is one entry in `TARGETS`.
 
 ## Use
 
 ```bash
 bun run login       # once — log into each service by hand (no credentials in code)
-bun run browser     # start the shared browser, leave it running
 ```
+
+A run starts the browser itself if it is not up, so `bun run browser` is only
+for the extra it adds: the `--AID` recorder. A Chrome already on :9222 is
+always reused, never restarted.
 
 The session lives in `shared_browser/google-profile/`, which the submodule
 gitignores — a fresh clone has no profile, so `bun run login` is required once

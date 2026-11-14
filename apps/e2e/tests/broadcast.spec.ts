@@ -3,8 +3,8 @@
 // both halves of that have silently been wrong before (see README). A fake
 // locator feeding a scripted sequence of frames exercises it in milliseconds.
 import { test, expect } from '@playwright/test';
-// @ts-expect-error — .mjs transport module, no types
 import { readWhenSettled } from '@star/browser-ensemble/broadcast';
+import type { Page } from 'playwright';
 
 const target = { name: 'fake', response: '.response' };
 
@@ -25,8 +25,12 @@ const fakePage = (frames: (string | null)[] | ((i: number) => string)) => {
 
 // settleMs 0 still requires two consecutive identical reads, which is the
 // quiescence rule itself — it just drops the wall-clock wait.
+// The fake implements only the three calls readWhenSettled makes, so the cast
+// is the honest description of it rather than a gap in the types.
+const asPage = (frames: Parameters<typeof fakePage>[0]) => fakePage(frames) as unknown as Page;
+
 const read = (frames: Parameters<typeof fakePage>[0], stale: string[] = []) =>
-    readWhenSettled(fakePage(frames), target, { before: 0, stale, settleMs: 0, timeoutMs: 2000 });
+    readWhenSettled(asPage(frames), target, { before: 0, stale, settleMs: 0, timeoutMs: 2000 });
 
 test('returns the answer once its text stops changing', async () => {
     expect(await read([null, 'par', 'partial', 'partial answer', 'partial answer'])).toMatchObject({
@@ -56,6 +60,15 @@ test('flags a provider error instead of accepting it as an answer', async () => 
         .toMatchObject({ providerError: true });
 });
 
+// The duplicate-line collapse still happens — it moved off the poll loop and on
+// to the one reading that is returned, and a transcript that kept the repeat
+// would carry it into every diff between rounds.
+test('a settled answer has its repeated lines collapsed', async () => {
+    expect(await read(['head\nhead\nbody', 'head\nhead\nbody'])).toMatchObject({
+        text: 'head\nbody',
+    });
+});
+
 test('a response that never settles times out', async () => {
     expect(await read((i) => `token ${i}`)).toMatchObject({ timedOut: true });
 });
@@ -63,7 +76,7 @@ test('a response that never settles times out', async () => {
 // Responses already on screen before the send must not be read back; only an
 // element beyond `before` counts.
 test('ignores responses that were present before the prompt was sent', async () => {
-    const r = await readWhenSettled(fakePage(['prior', 'prior']), target, {
+    const r = await readWhenSettled(asPage(['prior', 'prior']), target, {
         before: 1, settleMs: 0, timeoutMs: 300,
     });
     expect(r).toMatchObject({ text: '', timedOut: true });

@@ -4,10 +4,19 @@
   "type": "module",
   "description": "Peer-review ensemble over browser-based LLMs, driven through CDP.",
   "exports": {
-    ".": "./ensemble.mjs",
-    "./broadcast": "./broadcast.mjs"
+    ".": "./ensemble.ts",
+    "./broadcast": "./broadcast.ts",
+    "./types": "./types.ts",
+    "./worker": "./worker.ts"
+  },
+  "scripts": {
+    "lint": "tsc --noEmit"
   },
   "dependencies": {
     "playwright": "^1.63.0"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.4.2",
+    "typescript": "^5.9.3"
   }
 }

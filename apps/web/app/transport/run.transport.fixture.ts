@@ -1,14 +1,17 @@
 /**
- * The network boundary. Nothing outside this folder knows HTTP or WebSocket
- * exist, mirroring the backend's rule that only infrastructure/ names a vendor.
+ * A whole run, simulated from a timer.
  *
- * Two implementations of one interface. `httpRunTransport` is the real one —
- * it streams a run off the API. `makeLocalRunTransport` drives the same
- * interface from a timer and exists only so the specs can drain a full run
- * without a browser, an API, or three logged-in chat tabs.
+ * The real one arrives over a chat's socket (chat.transport.ts). This exists
+ * only so the specs can drain a full run — every phase, review and status, in
+ * order — without a browser, an API, or three logged-in chat tabs. It is a
+ * fixture, not a fallback: nothing in the app reaches for it.
+ *
+ * Named `.fixture.ts` for that reason. `domain/fixtures.ts` was deleted because
+ * sample data that looks like real data is indistinguishable from it on screen,
+ * and this file sitting in `transport/` under a transport's name was the same
+ * trap one rename away.
  */
 import type { Agent, RunEvent } from '../domain/run';
-import { sseEvents } from './sse';
 
 /** Distributes over the union, so each variant keeps its own shape. */
 type Unsequenced<T> = T extends unknown ? Omit<T, 'seq'> : never;
@@ -117,35 +120,3 @@ export function makeLocalRunTransport(pace = 1): RunTransport {
 }
 
 export const localRunTransport: RunTransport = makeLocalRunTransport();
-
-/**
- * The real transport: one POST, then events until the run ends.
- *
- * A run is MINUTES long — three rounds, each waiting on the slowest of three
- * real chat UIs — so this is a stream and not a request/response. There is no
- * timeout here on purpose: the only honest signal that a run is finished is the
- * server saying so, and a client-side deadline would abandon runs that were
- * still working.
- */
-export function makeHttpRunTransport(apiBase: string): RunTransport {
-    return {
-        async *start(prompt, signal) {
-            const res = await fetch(`${apiBase}/ensemble/run`, {
-                method: 'POST',
-                headers: { 'content-type': 'application/json' },
-                body: JSON.stringify({ prompt }),
-                signal,
-            });
-
-            // A refusal arrives as JSON with a status — most usefully 409, the
-            // shared browser already running someone else's round. Surfaced as
-            // a throw so useRun treats it as a failure rather than an empty run.
-            if (!res.ok || !res.body) {
-                const detail = await res.text().catch(() => '');
-                throw new Error(`run rejected (${res.status}) ${detail}`.trim());
-            }
-
-            yield* sseEvents<RunEvent>(res.body);
-        },
-    };
-}

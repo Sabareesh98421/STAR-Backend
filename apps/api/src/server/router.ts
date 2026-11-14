@@ -7,6 +7,8 @@ import { response, failure } from '@/shared/http';
 import { socketRouter } from '@/socket';
 import { toAppError } from '@/shared/utils/try-catch';
 import { Elysia } from 'elysia';
+import { cors } from '@elysiajs/cors';
+import { appConfig } from '@/config';
 const routerConfig={
     prefix:'/api',
 }
@@ -41,8 +43,18 @@ const masterRouter = new Elysia(routerConfig).derive(()=>({starttime:Date.now()}
     let field: string | null = null
     let reason: string
     if (code === ElysiaErrorCode.VALIDATION) {
-        const errPath = error.valueError?.path
-        field = (errPath ? errPath.replace(/^\//, '').replace(/\//g, '.') : '') || 'root'
+        // Two shapes, because two validators reach here: Zod reports a path as
+        // segments (['title']), TypeBox as a json pointer ('/title'). Calling
+        // .replace on the array threw INSIDE this handler, which is how every
+        // invalid body in the app answered with Bun's raw HTML fallback and a
+        // 500 — a client-caused error that client retry logic reads as
+        // transient. Measured against elysia 1.4 + zod 4, not assumed.
+        const errPath: unknown = error.valueError?.path ?? null
+        field = (Array.isArray(errPath)
+            ? errPath.join('.')
+            : typeof errPath === 'string'
+              ? errPath.replace(/^\//, '').replace(/\//g, '.')
+              : '') || 'root'
         reason = String(error.customError ?? error.valueError?.message ?? "Invalid request body")
     } else if (code === ElysiaErrorCode.PARSE) {
         const cause = (error as Error).cause
@@ -66,6 +78,7 @@ const masterRouter = new Elysia(routerConfig).derive(()=>({starttime:Date.now()}
     )
     return response(failure(appError));
 })
+.use(cors({ origin: appConfig.webOrigins, credentials: true }))
 .use(socketRouter)
 .use(authRoutes)
 .use(ensembleRoutes)

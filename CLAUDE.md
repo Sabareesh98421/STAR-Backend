@@ -3,6 +3,21 @@
 Bun + Elysia API, Prisma/Postgres persistence. Run: `bun run dev`. Test: `bun run test`
 (Playwright Test runner, see below).
 
+## Delivery pace — one piece at a time
+
+The developer reads one thing at a time. Never dump a whole feature in one
+turn.
+
+- Build and show **one file, or one small feature, per turn**. Stop there.
+- Then wait. The developer reads it, reviews it, asks questions. Don't start
+  the next piece until they say go.
+- No multi-file drops, no "here's the whole thing", no walls of explanation.
+  If the write-up is longer than the code, cut the write-up.
+- Commit only when the developer approves that piece, following the commit
+  message conventions below (one commit per file).
+- Exception: when the developer types `shutdown now`, commit everything that
+  is uncommitted right then, message `chore: backup commit`, no review needed.
+
 ## Commit message conventions
 
 One commit per file. One-line message: `<prefix>: <what changed>` — imperative,
@@ -125,6 +140,36 @@ user's own account only.
   convert `null` back to `undefined` (`value ?? undefined`) inline, right at
   that call, never earlier. Our own config/domain values stay `null`-typed up
   to that exact line.
+
+## UI component conventions
+
+- Reach for `@nuxt/ui` before writing a widget. It is already a dependency and
+  ships Reka UI's ARIA-complete primitives — `UCommandPalette`, `UListbox`,
+  `UInputMenu`, `UModal`, `UPopover`, `UTooltip`, `UTree`, `UTable`, `USwitch`,
+  `UToast`, and the `UChat*` set. Keyboard navigation, focus traps,
+  `aria-activedescendant` and screen-reader semantics are the expensive,
+  invisible-when-wrong part; don't re-derive them per feature. Don't add a
+  second component library (PrimeVue, Vuetify, Element) beside it: each brings
+  its own theming engine, and the Sheet A tokens in `main.css` would then have
+  two systems to fight instead of one to extend.
+- Hand-roll only what the design spec names and no library has. `GlassPanel`
+  is "blur 24 / fill 8% / 12% top hairline", `ObjectRow` is a five-slot row,
+  `StatusGlyph` is a glyph at a tone — these are tokens given a name, not
+  widgets. A library component wrapped to look like one of them is more code,
+  not less.
+- Style a Nuxt UI component through its `:ui` prop using the existing token
+  utilities (`bg-ink-08`, `text-13`, `rounded-panel`), never by introducing a
+  parallel palette. `--ui-primary`/`--ui-bg`/`--ui-text` are already mapped to
+  the accent in `main.css`, so a stock component arrives in the right colours.
+- A hand-rolled widget that takes keyboard input owes the ARIA a library
+  component would have given it. A filtered list needs `role="listbox"`,
+  `role="option"` and `aria-selected`; its input needs `role="combobox"`,
+  `aria-expanded` and `aria-activedescendant`; and whatever moves the active
+  index must `scrollIntoView({ block: 'nearest' })` or the selection walks out
+  of an `overflow-y-auto` container. `TravelingField` is the one widget that
+  cannot be a library component — the same `<input>` is composer, spotlight
+  query and focus pill and is never unmounted, so the caret survives the
+  morph — which is exactly why it has to carry these by hand.
 
 ## Test case generation
 

@@ -15,6 +15,8 @@ export function useShell() {
     const layer = shallowRef<ShellLayer>('rest');
     const focusMode = ref(false);
     const goLive = ref(false);
+    /** Editor view: rendered markdown, or the raw text. Raw is the default. */
+    const rendered = ref(false);
     const hintHeld = ref(false);
     const spotlightPrefix = shallowRef<SpotlightPrefix | null>(null);
     const toast = shallowRef<string | null>(null);
@@ -65,6 +67,7 @@ export function useShell() {
         if (ctrlKey && shiftKey && isLetter(event, 'E')) return openSpotlight('fs'), true;
         if (ctrlKey && !shiftKey && isLetter(event, 'P')) return openSpotlight(null), true;
         if (altKey && shiftKey && isLetter(event, 'F')) return (focusMode.value = !focusMode.value), true;
+        if (altKey && !shiftKey && isLetter(event, 'M')) return (rendered.value = !rendered.value), true;
         if (altKey && !shiftKey && isLetter(event, 'L')) return (layer.value = 'rest'), true;
         if (altKey && !shiftKey && isLetter(event, 'R') && goLive.value) return (layer.value = 'console'), true;
         if (metaKey && isLetter(event, 'S')) return showToast('Saved Cache.ts'), true;
@@ -112,10 +115,12 @@ export function useShell() {
         layer: readonly(layer),
         focusMode,
         goLive,
+        rendered,
         hintHeld: readonly(hintHeld),
         spotlightPrefix: readonly(spotlightPrefix),
         toast: readonly(toast),
         showToast,
+        openSpotlight,
         rest: () => (layer.value = 'rest'),
         runConsole: () => (layer.value = 'console'),
     };
