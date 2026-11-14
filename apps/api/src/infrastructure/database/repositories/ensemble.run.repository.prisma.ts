@@ -3,7 +3,7 @@ import type { Prisma } from '@/generated/prisma/client';
 import { getDb } from '../client';
 import type { RunSummary, StoredResponse, StoredRound, StoredRun } from '@star/run-protocol/history';
 import type { ChatSessionSummary, SessionTurnsResponse } from '@star/run-protocol/chat';
-import type { IEnsembleRunRepository, SaveRunInput, SessionTurn } from './ensemble.run.repository';
+import type { IEnsembleRunRepository, SaveRunInput, SessionAccess, SessionTurn } from './ensemble.run.repository';
 
 /**
  * Exactly the columns a summary needs, shared by both reads so the list and the
@@ -156,16 +156,17 @@ export class PrismaEnsembleRunRepository implements IEnsembleRunRepository {
         return run.id;
     }
 
-    async createSession(title: string): Promise<ChatSessionSummary> {
+    async createSession(title: string, access: SessionAccess): Promise<ChatSessionSummary> {
         const session = await getDb().chatSession.create({
-            data: { title },
+            data: { title, ...access },
             select: SESSION_SELECT,
         });
         return toSessionSummary(session);
     }
 
-    async listSessions(limit: number): Promise<ChatSessionSummary[]> {
+    async listSessions(limit: number, access: SessionAccess): Promise<ChatSessionSummary[]> {
         const sessions = await getDb().chatSession.findMany({
+            where: access,
             select: SESSION_SELECT,
             orderBy: { updatedAt: 'desc' },
             take: limit,
@@ -173,9 +174,9 @@ export class PrismaEnsembleRunRepository implements IEnsembleRunRepository {
         return sessions.map(toSessionSummary);
     }
 
-    async findSession(id: string): Promise<SessionTurnsResponse | null> {
-        const session = await getDb().chatSession.findUnique({
-            where: { id },
+    async findSession(id: string, access: SessionAccess): Promise<SessionTurnsResponse | null> {
+        const session = await getDb().chatSession.findFirst({
+            where: { id, ...access },
             select: {
                 ...SESSION_SELECT,
                 // Oldest first: a conversation is read in the order it was
@@ -188,11 +189,11 @@ export class PrismaEnsembleRunRepository implements IEnsembleRunRepository {
         return { session: toSessionSummary(session), turns: session.runs.map(toSummary) };
     }
 
-    async sessionExists(id: string): Promise<boolean> {
+    async sessionExists(id: string, access: SessionAccess): Promise<boolean> {
         // One indexed lookup of one column. See the interface for why this is
         // not `findSession(id) !== null`.
-        const session = await getDb().chatSession.findUnique({
-            where: { id },
+        const session = await getDb().chatSession.findFirst({
+            where: { id, ...access },
             select: { id: true },
         });
         return session !== null;
@@ -223,8 +224,9 @@ export class PrismaEnsembleRunRepository implements IEnsembleRunRepository {
         }));
     }
 
-    async list(limit: number): Promise<RunSummary[]> {
+    async list(limit: number, access: SessionAccess): Promise<RunSummary[]> {
         const runs = await getDb().ensembleRun.findMany({
+            where: { session: { is: access } },
             select: SUMMARY_SELECT,
             orderBy: { startedAt: 'desc' },
             take: limit,
@@ -232,10 +234,10 @@ export class PrismaEnsembleRunRepository implements IEnsembleRunRepository {
         return runs.map(toSummary);
     }
 
-    async findById(id: string, withRounds: boolean): Promise<StoredRun | null> {
+    async findById(id: string, withRounds: boolean, access: SessionAccess): Promise<StoredRun | null> {
         const db = getDb();
-        const run = await db.ensembleRun.findUnique({
-            where: { id },
+        const run = await db.ensembleRun.findFirst({
+            where: { id, session: { is: access } },
             // `context` only when the rounds are — it is what their prompts were
             // prepended with, and nothing to read on its own.
             select: {

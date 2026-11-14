@@ -6,12 +6,12 @@
 // the origin check is the only gate on this endpoint and "it is checked" cannot
 // be taken on trust from reading the code.
 import { test, expect } from '@playwright/test';
+import { randomUUID } from 'node:crypto';
 import { RunEventType } from '@star/run-protocol';
 import { CHAT_ERROR, ChatClientMessageType } from '@star/run-protocol/chat';
-import type { Elysia } from 'elysia';
 import type { ChatServerMessage } from '@star/run-protocol/chat';
 import { isAllowedOrigin } from './chat.socket';
-import { appConfig } from '@/config';
+import { appConfig, sessionConfig } from '@/config';
 
 
 const DEAD_CDP = 'http://127.0.0.1:1';
@@ -22,7 +22,17 @@ const ALLOWED = appConfig.webOrigins[0]!;
 type Db = typeof import('@/infrastructure/database');
 let db: Db;
 let dbReady = false;
-let app: Elysia;
+let redisReady = false;
+let disconnectRedis: (() => Promise<void>) | null = null;
+let ownerUserId: string | null = null;
+let authSessionId: string | null = null;
+let authCookie = '';
+interface TestServer {
+    stop(force?: boolean): Promise<unknown>;
+    server: { port: number | undefined } | null;
+}
+
+let app: TestServer;
 let port = 0;
 
 test.beforeAll(async () => {
@@ -35,13 +45,32 @@ test.beforeAll(async () => {
         () => true,
         () => false,
     );
+    const redis = await import('@/infrastructure/redis');
+    redisReady = await redis.connectRedis().then(
+        () => true,
+        () => false,
+    );
+    if (redisReady) disconnectRedis = redis.disconnectRedis;
+
+    if (dbReady && redisReady) {
+        const owner = await db.userRepository.create({
+            email: `spec-socket-${randomUUID()}@example.test`,
+            firstName: 'Socket',
+            secondName: null,
+            passwordHash: 'not-used-by-this-spec',
+        });
+        ownerUserId = owner.id;
+        const sessionStore = await import('@/modules/auth/service/session');
+        authSessionId = await sessionStore.createSession(owner.id, owner.email);
+        authCookie = `${sessionConfig.cookieName}=${authSessionId}`;
+    }
 
     // The real router, so the route under test is the route that ships —
     // including its /api prefix, which is where the socket is actually mounted.
     const { Elysia } = await import('elysia');
-    const masterRouter = (await import('@/server/router')).default;
+    const serverRouter = (await import('@/server/router')).default;
     // Port 0: an ephemeral port, so the suite never collides with a dev server.
-    app = new Elysia().use(masterRouter).listen({ port: 0, reusePort: false });
+    app = new Elysia().use(serverRouter).listen({ port: 0, reusePort: false });
     port = app.server?.port ?? 0;
 });
 
@@ -54,18 +83,25 @@ test.beforeAll(async () => {
  * symptom was a turn that had been written and then vanished.
  */
 const MINE = 'spec:socket ';
+const access = () => ({ ownerUserId, freeTrialId: null });
 
 test.afterAll(async () => {
     // Forced: a socket this suite opened is still connected, and a graceful
     // stop waits for connections that are only closed when the process ends.
     await app?.stop(true);
+    if (authSessionId !== null) {
+        const sessionStore = await import('@/modules/auth/service/session');
+        await sessionStore.deleteSession(authSessionId);
+    }
+    await disconnectRedis?.();
     if (!dbReady) return;
     await db.getDb().chatSession.deleteMany({ where: { title: { startsWith: MINE } } });
+    if (ownerUserId !== null) await db.getDb().user.deleteMany({ where: { id: ownerUserId } });
     await db.disconnectDatabase();
 });
 
 const session = async (title = `${MINE}chat`) =>
-    (await db.ensembleRunRepository.createSession(title)).id;
+    (await db.ensembleRunRepository.createSession(title, access())).id;
 
 const url = (sessionId: string, since: number | null = null) =>
     `ws://127.0.0.1:${port}/api/ws/chat/${sessionId}${since === null ? '' : `?since=${since}`}`;
@@ -93,11 +129,14 @@ function waitFor(socket: WebSocket, type: string, ms = 20_000): Promise<ChatServ
     });
 }
 
-const connect = (sessionId: string, origin: string | null = ALLOWED, since: number | null = null) =>
-    new WebSocket(url(sessionId, since), origin === null ? {} : { headers: { origin } });
+const connect = (sessionId: string, origin: string | null = ALLOWED, since: number | null = null) => {
+    const headers: Record<string, string> = { cookie: authCookie };
+    if (origin !== null) headers.origin = origin;
+    return new WebSocket(url(sessionId, since), { headers });
+};
 
 test('a handshake from a disallowed origin is refused', async () => {
-    test.skip(!dbReady, 'needs Postgres on DATABASE_URL');
+    test.skip(!dbReady || !redisReady, 'needs Postgres and Redis');
 
     const socket = connect(await session(), 'http://evil.example');
     // The whole reason this test exists: CORS never sees this request, so a
@@ -107,7 +146,7 @@ test('a handshake from a disallowed origin is refused', async () => {
 });
 
 test('a handshake for a session that does not exist is refused', async () => {
-    test.skip(!dbReady, 'needs Postgres on DATABASE_URL');
+    test.skip(!dbReady || !redisReady, 'needs Postgres and Redis');
 
     // A well-formed id that was never created. Accepting it would let a turn
     // run for minutes and then fail its foreign key on the way to being
@@ -118,7 +157,7 @@ test('a handshake for a session that does not exist is refused', async () => {
 });
 
 test('a conversation accepts a connection and streams the turn it is asked for', async () => {
-    test.skip(!dbReady, 'needs Postgres on DATABASE_URL');
+    test.skip(!dbReady || !redisReady, 'needs Postgres and Redis');
 
     const socket = connect(await session());
     expect(await opened(socket)).toBe(true);
@@ -140,7 +179,7 @@ test('a conversation accepts a connection and streams the turn it is asked for',
 });
 
 test('an unrecognised message is answered with an error, never ignored', async () => {
-    test.skip(!dbReady, 'needs Postgres on DATABASE_URL');
+    test.skip(!dbReady || !redisReady, 'needs Postgres and Redis');
 
     const socket = connect(await session());
     expect(await opened(socket)).toBe(true);

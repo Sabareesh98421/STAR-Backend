@@ -33,6 +33,11 @@ export interface SessionTurn {
     readonly answers: readonly { readonly model: string; readonly ok: boolean; readonly text: string }[];
 }
 
+export interface SessionAccess {
+    readonly ownerUserId: string | null;
+    readonly freeTrialId: string | null;
+}
+
 /**
  * Runs and the sessions that hold them, in one repository.
  *
@@ -45,19 +50,19 @@ export interface IEnsembleRunRepository {
     /** Returns the stored run's id. */
     save(input: SaveRunInput): Promise<string>;
     /** Summaries only — a transcript is tens of kilobytes. */
-    list(limit: number): Promise<RunSummary[]>;
+    list(limit: number, access: SessionAccess): Promise<RunSummary[]>;
     /** One run with its transcript. `withRounds` adds every round's prompts and
      *  answers, which is several times the bytes — see StoredRun.rounds. */
-    findById(id: string, withRounds: boolean): Promise<StoredRun | null>;
+    findById(id: string, withRounds: boolean, access: SessionAccess): Promise<StoredRun | null>;
 
-    createSession(title: string): Promise<ChatSessionSummary>;
+    createSession(title: string, access: SessionAccess): Promise<ChatSessionSummary>;
     /** Most recently used first: a rail lists conversations, not creations. */
-    listSessions(limit: number): Promise<ChatSessionSummary[]>;
+    listSessions(limit: number, access: SessionAccess): Promise<ChatSessionSummary[]>;
     /** The session and its turns, oldest first. Null if there is no session. */
-    findSession(id: string): Promise<SessionTurnsResponse | null>;
+    findSession(id: string, access: SessionAccess): Promise<SessionTurnsResponse | null>;
     /** Whether a conversation exists, without reading it. Not
      *  `findSession(id) !== null`, which loads every turn to answer yes. */
-    sessionExists(id: string): Promise<boolean>;
+    sessionExists(id: string, access: SessionAccess): Promise<boolean>;
     /** The newest `limit` turns of a conversation, oldest first. Rows only —
      *  `conversationContext` decides what a model is told about them. */
     recentTurns(sessionId: string, limit: number): Promise<SessionTurn[]>;

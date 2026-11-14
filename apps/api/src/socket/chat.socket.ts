@@ -15,12 +15,14 @@ import { appConfig } from '@/config';
 import { ensembleConfig } from '@/config';
 import { logger } from '@/infrastructure/logger';
 import { ensembleRunRepository } from '@/infrastructure/database';
+import type { SessionAccess } from '@/infrastructure/database';
 import { response, failure } from '@/shared/http';
 import { NotFoundError, UnauthorizedError, ValidationError } from '@/shared/errors';
 import { toChatError } from '@/modules/ensemble/ensemble.events';
 import { SESSION_RESOURCE } from '@/modules/ensemble/ensemble.history';
 import { startTurn, subscribe } from '@/modules/ensemble/ensemble.live';
 import { chatClientMessageSchema, idParamsSchema, PROMPT_MAX } from '@/modules/ensemble/ensemble.schema';
+import { sessionMiddleware } from '@/server/middleware/session';
 import type { ChatServerMessage } from '@star/run-protocol/chat';
 
 /**
@@ -106,7 +108,7 @@ const WORST_CASE_BYTES_PER_CHAR = 8;
  */
 const MAX_FRAME_BYTES = PROMPT_MAX * WORST_CASE_BYTES_PER_CHAR;
 
-const chatSocket = new Elysia().ws('/ws/chat/:id', {
+const chatSocket = new Elysia().use(sessionMiddleware).ws('/ws/chat/:id', {
     // Bun's own ceiling. The ping above is what actually keeps the connection
     // alive; this only widens the window if a ping is ever missed.
     idleTimeout: 255,
@@ -130,12 +132,14 @@ const chatSocket = new Elysia().ws('/ws/chat/:id', {
      *
      * So is a SAME-origin one — see `isAllowedOrigin`.
      */
-    async beforeHandle({ params, headers }) {
+    async beforeHandle({ params, headers, user }) {
         const origin = headers.origin ?? null;
         if (origin !== null && !isAllowedOrigin(origin, headers.host ?? null)) {
             logger.warn({ origin }, 'Rejected a chat socket handshake from a disallowed origin');
             return response(failure(new UnauthorizedError('Origin not allowed')));
         }
+
+        if (!user) return response(failure(new UnauthorizedError()));
 
         const id = idParamsSchema.safeParse(params);
         if (!id.success) {
@@ -146,7 +150,8 @@ const chatSocket = new Elysia().ws('/ws/chat/:id', {
         // missing session fails its foreign key, and that write is deliberately
         // non-fatal — so the turn would spend minutes of browser time and leave
         // no record anywhere.
-        if (!(await ensembleRunRepository.sessionExists(id.data.id))) {
+        const access: SessionAccess = { ownerUserId: user.id, freeTrialId: null };
+        if (!(await ensembleRunRepository.sessionExists(id.data.id, access))) {
             return response(failure(new NotFoundError(SESSION_RESOURCE, id.data.id)));
         }
     },

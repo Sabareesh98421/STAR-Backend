@@ -53,6 +53,7 @@ const REVISE_SENT = { chatgpt: 'peer critiques for chatgpt', claude: 'peer criti
 const CONTEXT = { chatgpt: 'PRIOR_CG', claude: 'PRIOR_CL' };
 const THREAD_URL = 'https://chatgpt.com/c/0000-draft';
 const CONTEXT_TURNS = 4;
+const ACCESS = { ownerUserId: null, freeTrialId: null } as const;
 
 const transcript: Transcript = {
     question: QUESTION,
@@ -105,7 +106,7 @@ test.beforeAll(async () => {
     const { outcome, toMarkdown, transcriptFileName } = await import('./ensemble.transcript');
     const { RunStatus } = await import('@star/run-protocol');
     const { answered, changed } = outcome(transcript);
-    sessionId = (await db.ensembleRunRepository.createSession(`spec:history ${QUESTION}`)).id;
+    sessionId = (await db.ensembleRunRepository.createSession(`spec:history ${QUESTION}`, ACCESS)).id;
     runId = await db.ensembleRunRepository.save({
         sessionId,
         transcript,
@@ -138,7 +139,7 @@ test.beforeEach(() => {
  * asking for them is part of what these tests assert.
  */
 const storedRun = async (id: string): Promise<StoredRun & { rounds: StoredRound[] }> => {
-    const res = await history.getRunHandler({ id }, { rounds: true });
+    const res = await history.getRunHandler({ id }, { rounds: true }, ACCESS);
     expect(res.status).toBe(200);
     const payload = (await res.json()) as { data: StoredRun };
     // Asked for, so present. Null here would be the endpoint ignoring the query.
@@ -202,7 +203,7 @@ test('changedModels matches what the rendered transcript says', async () => {
 });
 
 test('the list endpoint returns summaries, not transcripts', async () => {
-    const res = await history.listRunsHandler({ limit: 50 });
+    const res = await history.listRunsHandler({ limit: 50 }, ACCESS);
     const { data } = (await res.json()) as { data: RunListResponse };
     const summary = data.runs.find((r) => r.id === runId) ?? null;
 
@@ -218,13 +219,13 @@ test('the list endpoint returns summaries, not transcripts', async () => {
 });
 
 test('the list limit is honoured', async () => {
-    const res = await history.listRunsHandler({ limit: 1 });
+    const res = await history.listRunsHandler({ limit: 1 }, ACCESS);
     const { data } = (await res.json()) as { data: RunListResponse };
     expect(data.runs.length).toBeLessThanOrEqual(1);
 });
 
 test('a run is fetched without its rounds unless they are asked for', async () => {
-    const res = await history.getRunHandler({ id: runId }, { rounds: false });
+    const res = await history.getRunHandler({ id: runId }, { rounds: false }, ACCESS);
     const { data } = (await res.json()) as { data: StoredRun };
 
     // The transcript is what the editor opens, and it already contains every
@@ -245,6 +246,7 @@ test('an unknown run id is a 404, not an empty 200', async () => {
     const res = await history.getRunHandler(
         { id: '00000000-0000-4000-8000-000000000000' },
         { rounds: false },
+        ACCESS,
     );
 
     // A 200 with nothing in it tells the client the run exists and holds no
@@ -255,7 +257,7 @@ test('an unknown run id is a 404, not an empty 200', async () => {
 });
 
 test('a turn is filed under its conversation, and the conversation reads back in order', async () => {
-    const res = await history.getSessionHandler({ id: sessionId });
+    const res = await history.getSessionHandler({ id: sessionId }, ACCESS);
     expect(res.status).toBe(200);
     const payload = (await res.json()) as { data: SessionTurnsResponse };
 
@@ -293,7 +295,7 @@ test('each model is given back its own prior answers and no peer\'s', async () =
 });
 
 test('a conversation with no turns yet hands the models nothing', async () => {
-    const fresh = await db.ensembleRunRepository.createSession('spec:history never asked');
+    const fresh = await db.ensembleRunRepository.createSession('spec:history never asked', ACCESS);
     // Not an empty block, not a heading with no body: nothing at all. The
     // first turn of a conversation must be indistinguishable from a run that
     // had no conversation to continue.
@@ -312,7 +314,7 @@ test('a title is one line, and short enough for a rail to render', () => {
 });
 
 test('a session that does not exist is a 404, not an empty conversation', async () => {
-    const res = await history.getSessionHandler({ id: '3f1a7c6e-0000-4000-8000-000000000000' });
+    const res = await history.getSessionHandler({ id: '3f1a7c6e-0000-4000-8000-000000000000' }, ACCESS);
     // An empty conversation is a real state — opened, never asked — so it
     // cannot also be how a missing one answers.
     expect(res.status).toBe(404);

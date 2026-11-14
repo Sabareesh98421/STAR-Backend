@@ -38,6 +38,7 @@ test.beforeAll(async () => {
  * symptom was a turn that had been written and then vanished.
  */
 const MINE = 'spec:live ';
+const ACCESS = { ownerUserId: null, freeTrialId: null } as const;
 
 test.afterAll(async () => {
     if (!dbReady) return;
@@ -48,7 +49,7 @@ test.afterAll(async () => {
 const PROMPT = 'spec: live turn';
 
 const session = async (title = `${MINE}turn`) =>
-    (await db.ensembleRunRepository.createSession(title)).id;
+    (await db.ensembleRunRepository.createSession(title, ACCESS)).id;
 
 /**
  * Turns are started, not awaited — a real one is minutes long. With a dead CDP
